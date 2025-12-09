@@ -9,7 +9,7 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web" async></script>
 
     <script>
@@ -17,7 +17,7 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
                     animation: { 
                         'fade-in': 'fadeIn 0.3s ease-out forwards',
                         'slide-up': 'slideUp 0.4s ease-out forwards' 
@@ -40,18 +40,18 @@
             color: white;
             overscroll-behavior-y: none;
             -webkit-tap-highlight-color: transparent;
-            user-select: none; /* Metin seçimini de engelle */
+            user-select: none;
         }
         .glass-panel {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
         }
         .glass-input {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             color: white;
         }
         .glass-input:focus {
@@ -59,97 +59,125 @@
             outline: none;
             border-color: rgba(255, 255, 255, 0.3);
         }
+        .widget-card {
+            @apply glass-panel rounded-2xl p-4 flex flex-col justify-between transition-all duration-300 hover:bg-white/10;
+            min-height: 140px;
+        }
         .hidden { display: none !important; }
         
         .modal-enter { opacity: 0; transform: scale(0.95); pointer-events: none; }
         .modal-active { opacity: 1; transform: scale(1); pointer-events: auto; }
         .transition-all-300 { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+        /* Toggle Switch */
+        .toggle-checkbox:checked { right: 0; border-color: #3b82f6; }
+        .toggle-checkbox:checked + .toggle-label { @apply bg-blue-600; }
     </style>
 </head>
-<body class="antialiased selection:bg-blue-500/40 relative overflow-hidden" oncontextmenu="return false;">
+<body class="antialiased selection:bg-blue-500/40 relative overflow-hidden font-sans" oncontextmenu="return false;">
 
     <!-- Header -->
     <header class="absolute top-0 left-0 w-full p-4 md:p-6 flex justify-between items-start z-30">
         <div class="opacity-80 pt-2 pl-1">
-            <div id="miniDate" class="text-[10px] font-bold tracking-[0.2em] uppercase text-blue-200 opacity-0 transition-opacity duration-500">...</div>
-            <!-- Kontrol Merkezi yazısı silindi -->
+            <div id="miniDate" class="text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 opacity-0 transition-opacity duration-500">...</div>
         </div>
 
         <div class="flex gap-3">
-            <button onclick="safeApp.toggleTodo()" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center hover:bg-white/10 active:scale-95 transition">
-                <i class="ph ph-check-square text-xl"></i>
+            <button onclick="safeApp.toggleTodo()" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center hover:bg-white/10 active:scale-95 transition relative group">
+                <i class="ph ph-list-checks text-xl"></i>
                 <span id="todoBadge" class="absolute top-0 right-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-[#0f172a] hidden"></span>
             </button>
             <button onclick="safeApp.toggleSettings()" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center hover:bg-white/10 active:scale-95 transition">
-                <i class="ph ph-gear text-xl"></i>
+                <i class="ph ph-sliders text-xl"></i>
             </button>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="h-screen flex flex-col items-center justify-center px-4 w-full max-w-4xl mx-auto relative z-10">
-        
-        <!-- Saat -->
-        <div class="text-center mb-8 animate-slide-up">
-            <h1 id="clock" class="text-7xl md:text-9xl font-bold tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 select-none">
-                00:00
-            </h1>
-            <div class="mt-4 text-xl font-light text-white/80">
-                <span id="greeting">Merhaba</span>, <span id="userNameDisplay" class="font-medium text-white border-b border-white/20">Misafir</span>
+    <main class="h-screen overflow-y-auto overflow-x-hidden w-full relative z-10 custom-scroll pb-20">
+        <div class="min-h-full flex flex-col items-center justify-center px-4 w-full max-w-5xl mx-auto pt-20">
+            
+            <!-- Saat -->
+            <div class="text-center mb-8 animate-slide-up">
+                <h1 id="clock" class="text-7xl md:text-9xl font-bold tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 select-none font-mono">
+                    00:00
+                </h1>
+                <div class="mt-4 text-xl font-light text-white/80">
+                    <span id="greeting">Merhaba</span>, <span id="userNameDisplay" class="font-medium text-white border-b border-white/20">Misafir</span>
+                </div>
             </div>
-        </div>
 
-        <!-- Arama -->
-        <div class="w-full max-w-lg relative mb-8 animate-slide-up" style="animation-delay: 100ms;">
-            <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-white/50">
-                <i class="ph ph-magnifying-glass text-xl"></i>
+            <!-- Arama -->
+            <div class="w-full max-w-lg relative mb-8 animate-slide-up" style="animation-delay: 100ms;">
+                <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-white/50">
+                    <i class="ph ph-magnifying-glass text-xl"></i>
+                </div>
+                <form onsubmit="event.preventDefault(); safeApp.search();" action=".">
+                    <input 
+                        type="text" 
+                        id="searchInput"
+                        class="w-full py-4 pl-12 pr-16 rounded-2xl glass-input text-lg placeholder-white/30"
+                        placeholder="Arama yap..."
+                        autocomplete="off"
+                    >
+                </form>
+                <button onclick="safeApp.cycleEngine()" class="absolute inset-y-2 right-2 px-3 rounded-xl hover:bg-white/10 text-xs text-white/50 hover:text-white transition font-bold tracking-wide uppercase" id="engineName">
+                    GGL
+                </button>
             </div>
-            <form onsubmit="event.preventDefault(); safeApp.search();" action=".">
-                <input 
-                    type="text" 
-                    id="searchInput"
-                    class="w-full py-4 pl-12 pr-16 rounded-2xl glass-input text-lg placeholder-white/30"
-                    placeholder="Arama yap..."
-                    autocomplete="off"
-                >
-            </form>
-            <button onclick="safeApp.cycleEngine()" class="absolute inset-y-2 right-2 px-3 rounded-xl hover:bg-white/10 text-xs text-white/50 hover:text-white transition font-bold tracking-wide uppercase" id="engineName">
-                GGL
-            </button>
+
+            <!-- WIDGET AREA (New) -->
+            <div id="widgetContainer" class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-4xl mb-8 animate-slide-up hidden" style="animation-delay: 150ms;">
+                <!-- Widgets injected via JS -->
+            </div>
+
+            <!-- Linkler -->
+            <div id="linksGrid" class="grid grid-cols-4 md:grid-cols-6 gap-3 w-full max-w-2xl animate-slide-up" style="animation-delay: 200ms;"></div>
         </div>
-
-        <!-- Linkler -->
-        <div id="linksGrid" class="grid grid-cols-4 md:grid-cols-5 gap-3 w-full animate-slide-up" style="animation-delay: 200ms;"></div>
-
     </main>
 
     <!-- AYARLAR MODAL -->
     <div id="settingsModal" class="fixed inset-0 z-50 flex items-center justify-center modal-enter transition-all-300">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="safeApp.toggleSettings()"></div>
-        <div class="relative w-80 glass-panel rounded-3xl p-6 transform transition-all-300 z-10">
+        <div class="relative w-96 glass-panel rounded-3xl p-6 transform transition-all-300 z-10 max-h-[80vh] overflow-y-auto custom-scroll">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xs font-bold uppercase tracking-widest text-white/50">Ayarlar</h3>
+                <h3 class="text-xs font-bold uppercase tracking-widest text-white/50">Özelleştir</h3>
                 <button onclick="safeApp.toggleSettings()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10"><i class="ph ph-x text-lg"></i></button>
             </div>
-            <div class="space-y-4">
-                <div>
-                    <label class="text-xs text-white/60 block mb-1">İsim</label>
+            
+            <div class="space-y-6">
+                <!-- İsim -->
+                <div class="space-y-2">
+                    <label class="text-xs text-white/60 font-bold uppercase">Kimlik</label>
                     <input type="text" id="nameInput" oninput="safeApp.updateName(this.value)" class="w-full p-2 rounded-lg glass-input text-sm">
                 </div>
-                <div>
-                    <label class="text-xs text-white/60 block mb-2">Tema</label>
-                    <div class="grid grid-cols-4 gap-2" id="colorOptions"></div>
+
+                <!-- Tema -->
+                <div class="space-y-2">
+                    <label class="text-xs text-white/60 font-bold uppercase">Tema</label>
+                    <div class="grid grid-cols-5 gap-2" id="colorOptions"></div>
                 </div>
-                <div class="pt-4 border-t border-white/10">
-                    <label class="text-xs text-white/60 block mb-2">Kısayol Ekle</label>
-                    <div class="space-y-2">
-                        <input id="linkTitle" placeholder="Başlık" class="w-full p-2 rounded-lg glass-input text-xs">
-                        <input id="linkUrl" placeholder="URL" class="w-full p-2 rounded-lg glass-input text-xs">
-                        <button onclick="safeApp.addLink()" class="w-full py-2 bg-white/10 hover:bg-blue-600 rounded-lg text-xs font-bold transition">Ekle</button>
+
+                <!-- Widgets Toggle -->
+                <div class="space-y-2">
+                    <label class="text-xs text-white/60 font-bold uppercase">Widgetlar</label>
+                    <div id="widgetToggles" class="space-y-2 bg-white/5 p-3 rounded-xl">
+                        <!-- JS Injected -->
                     </div>
                 </div>
+
+                <!-- Kısayol Ekle -->
+                <div class="space-y-2 pt-2 border-t border-white/10">
+                    <label class="text-xs text-white/60 font-bold uppercase">Yeni Kısayol</label>
+                    <div class="flex flex-col gap-2">
+                        <input id="linkTitle" placeholder="Başlık" class="w-full p-2 rounded-lg glass-input text-xs">
+                        <input id="linkUrl" placeholder="URL" class="w-full p-2 rounded-lg glass-input text-xs">
+                        <button onclick="safeApp.addLink()" class="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-bold transition shadow-lg shadow-blue-500/20">Ekle</button>
+                    </div>
+                </div>
+                
                 <div class="pt-2 text-center">
-                     <button onclick="safeApp.reset()" class="text-[10px] text-red-400 opacity-60 hover:opacity-100">Ayarları Sıfırla</button>
+                     <button onclick="safeApp.reset()" class="text-[10px] text-red-400 opacity-60 hover:opacity-100 transition">Fabrika Ayarlarına Dön</button>
                 </div>
             </div>
         </div>
@@ -166,45 +194,43 @@
         <div id="todoList" class="flex-1 overflow-y-auto p-4 space-y-2 custom-scroll"></div>
 
         <div class="p-4 bg-black/20 border-t border-white/10 relative">
-            <input id="todoInput" onkeydown="if(event.key==='Enter') safeApp.addTodo()" type="text" placeholder="Görev..." class="w-full pl-4 pr-10 py-3 rounded-xl glass-input text-sm">
+            <input id="todoInput" onkeydown="if(event.key==='Enter') safeApp.addTodo()" type="text" placeholder="Görev ekle..." class="w-full pl-4 pr-10 py-3 rounded-xl glass-input text-sm">
             <button onclick="safeApp.addTodo()" class="absolute right-6 top-1/2 -translate-y-1/2 text-blue-400 hover:text-white"><i class="ph ph-plus-circle text-xl"></i></button>
         </div>
     </div>
 
     <script>
         const safeApp = (function() {
+            // --- STORAGE ---
             const storage = {
-                get: (key) => {
-                    try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
-                },
-                set: (key, val) => {
-                    try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
-                },
-                clear: (key) => {
-                     try { localStorage.removeItem(key); } catch(e){}
-                }
+                get: (key) => { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
+                set: (key, val) => { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} },
+                clear: (key) => { try { localStorage.removeItem(key); } catch {} }
             };
 
-            let data = storage.get('hp_v7') || {
+            // --- DATA ---
+            let data = storage.get('hp_v8') || {
                 name: 'Kaptan',
-                theme: 'midnight',
+                theme: 'cyber',
                 engineIdx: 0,
+                widgets: { weather: true, crypto: true, pomodoro: true, notes: true }, // Default widgets
+                noteContent: '',
                 links: [
                     { t: 'YouTube', u: 'https://youtube.com', i: 'ph-youtube-logo' },
-                    { t: 'Google', u: 'https://google.com', i: 'ph-google-logo' }
+                    { t: 'ChatGPT', u: 'https://chat.openai.com', i: 'ph-robot' },
+                    { t: 'GitHub', u: 'https://github.com', i: 'ph-github-logo' }
                 ],
                 todos: []
             };
 
+            // --- CONSTANTS ---
             const themes = {
                 midnight: 'linear-gradient(to bottom right, #0f172a, #000000)',
                 sunset: 'linear-gradient(to bottom right, #831843, #1e1b4b)',
                 ocean: 'linear-gradient(to bottom right, #1e3a8a, #0f172a)',
-                forest: 'linear-gradient(to bottom right, #14532d, #020617)',
-                void: 'linear-gradient(to bottom right, #000000, #111)',
-                nebula: 'linear-gradient(to bottom right, #4c1d95, #be185d)', // Yeni: Nebula (Mor)
-                northern: 'linear-gradient(to bottom right, #0f766e, #0c4a6e)', // Yeni: Kuzey (Turkuaz)
-                gold: 'linear-gradient(to bottom right, #713f12, #000000)' // Yeni: Altın
+                cyber: 'linear-gradient(to bottom right, #111827, #000000)', // Cyberpunk dark
+                monochrome: 'linear-gradient(to bottom right, #404040, #000000)',
+                gold: 'linear-gradient(to bottom right, #713f12, #000000)'
             };
 
             const engines = [
@@ -220,21 +246,26 @@
             };
 
             const el = (id) => document.getElementById(id);
+            let pomodoroInterval = null;
 
+            // --- INIT ---
             function init() {
-                // Sağ tık engelleme JS tarafında da garanti olsun
                 document.addEventListener('contextmenu', event => event.preventDefault());
-                
                 applyTheme();
                 renderAll();
                 startClock();
+                initWidgets(); // Start widget logic
                 if(el('miniDate')) el('miniDate').classList.remove('opacity-0');
             }
 
-            function save() { storage.set('hp_v7', data); }
+            function save() { storage.set('hp_v8', data); }
 
             function applyTheme() {
                 document.body.style.background = themes[data.theme] || themes.midnight;
+                // Cyberpunk özel CSS
+                if(data.theme === 'cyber') {
+                    document.body.style.setProperty('--accent', '#00ff9d');
+                }
                 renderThemes();
             }
 
@@ -251,139 +282,122 @@
                 setInterval(tick, 1000);
             }
 
+            // --- WIDGET LOGIC ---
+            function initWidgets() {
+                // Weather
+                if (data.widgets.weather) fetchWeather();
+                // Crypto
+                if (data.widgets.crypto) fetchCrypto();
+            }
+
+            async function fetchWeather() {
+                const wEl = el('widget-weather-val');
+                if(!wEl) return;
+                try {
+                    // Default Istanbul coordinates if geo fails or specific request
+                    const lat = 41.0082, lon = 28.9784; 
+                    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`);
+                    const json = await res.json();
+                    const temp = Math.round(json.current.temperature_2m);
+                    wEl.innerText = `${temp}°C İstanbul`;
+                } catch {
+                    wEl.innerText = "--°C";
+                }
+            }
+
+            async function fetchCrypto() {
+                const cEl = el('widget-crypto-val');
+                if(!cEl) return;
+                try {
+                    const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+                    const json = await res.json();
+                    const price = parseFloat(json.price).toLocaleString('en-US', {maximumFractionDigits: 0});
+                    cEl.innerText = `$${price}`;
+                } catch {
+                    cEl.innerText = "Hata";
+                }
+            }
+
+            function togglePomodoro() {
+                const btn = el('pomo-btn');
+                const timeEl = el('pomo-time');
+                if (pomodoroInterval) {
+                    clearInterval(pomodoroInterval);
+                    pomodoroInterval = null;
+                    btn.innerHTML = '<i class="ph ph-play-circle text-2xl"></i>';
+                    timeEl.classList.remove('text-blue-400');
+                } else {
+                    let seconds = 25 * 60;
+                    btn.innerHTML = '<i class="ph ph-pause-circle text-2xl text-red-400"></i>';
+                    timeEl.classList.add('text-blue-400');
+                    pomodoroInterval = setInterval(() => {
+                        seconds--;
+                        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+                        const s = (seconds % 60).toString().padStart(2, '0');
+                        timeEl.innerText = `${m}:${s}`;
+                        if (seconds <= 0) {
+                            clearInterval(pomodoroInterval);
+                            pomodoroInterval = null;
+                            timeEl.innerText = "25:00";
+                            alert("Süre doldu!");
+                            btn.innerHTML = '<i class="ph ph-play-circle text-2xl"></i>';
+                        }
+                    }, 1000);
+                }
+            }
+
+            function saveNote(val) {
+                data.noteContent = val;
+                save();
+            }
+
+            // --- RENDER ---
             function renderAll() {
                 if(el('userNameDisplay')) el('userNameDisplay').innerText = data.name;
                 if(el('nameInput')) el('nameInput').value = data.name;
+                renderWidgets();
+                renderWidgetToggles();
                 renderLinks();
                 renderTodos();
                 updateEngineUI();
             }
 
-            function renderLinks() {
-                const grid = el('linksGrid');
-                if(!grid) return;
-                grid.innerHTML = data.links.map((l, i) => `
-                    <a href="${l.u}" class="flex flex-col items-center justify-center p-3 rounded-xl glass-panel hover:bg-white/10 active:scale-95 transition relative group text-white no-underline">
-                        <i class="ph ${l.i} text-2xl mb-1 opacity-80"></i>
-                        <span class="text-[10px] font-medium opacity-60">${l.t}</span>
-                        <button onclick="event.preventDefault(); safeApp.deleteLink(${i})" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="ph ph-minus text-white text-[10px]"></i></button>
-                    </a>
-                `).join('') + `
-                    <button onclick="safeApp.toggleSettings()" class="flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-white/20 hover:bg-white/5 opacity-50 hover:opacity-100">
-                        <i class="ph ph-plus text-xl"></i>
-                    </button>
-                `;
-            }
-
-            function renderTodos() {
-                const list = el('todoList');
-                if(!list) return;
-                const active = data.todos.filter(t => !t.done).length;
-                el('todoBadge').classList.toggle('hidden', active === 0);
-                list.innerHTML = data.todos.length ? data.todos.map((t, i) => `
-                    <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 mb-2 group">
-                        <div onclick="safeApp.toggleTodoItem(${i})" class="flex items-center gap-3 flex-1 cursor-pointer">
-                            <div class="w-4 h-4 rounded border flex items-center justify-center ${t.done ? 'bg-blue-500 border-blue-500' : 'border-white/30'}">
-                                ${t.done ? '<i class="ph ph-check text-[10px]"></i>' : ''}
-                            </div>
-                            <span class="text-sm ${t.done ? 'line-through text-white/30' : 'text-white/90'}">${t.text}</span>
-                        </div>
-                        <button onclick="safeApp.deleteTodo(${i})" class="text-white/30 hover:text-red-400"><i class="ph ph-trash"></i></button>
-                    </div>
-                `).join('') : '<div class="text-center text-white/20 text-xs mt-10">Liste boş</div>';
-            }
-
-            function renderThemes() {
-                const container = el('colorOptions');
+            function renderWidgets() {
+                const container = el('widgetContainer');
                 if(!container) return;
-                container.innerHTML = Object.keys(themes).map(key => `
-                    <div onclick="safeApp.setTheme('${key}')" class="w-full aspect-square rounded-full border-2 cursor-pointer ${data.theme === key ? 'border-white' : 'border-transparent'}" style="background:${themes[key]}"></div>
-                `).join('');
-            }
-
-            function updateEngineUI() {
-                const eng = engines[data.engineIdx];
-                if(el('engineName')) el('engineName').innerText = eng.n;
-                // Placeholder sabit istendiği için burada placeholder güncellemesi yapmıyoruz
-                // Sadece arama motoru ismini güncelliyoruz
-            }
-
-            return {
-                init,
-                updateName: (val) => { data.name = val; el('userNameDisplay').innerText = val; save(); },
-                setTheme: (key) => { data.theme = key; applyTheme(); save(); },
-                cycleEngine: () => { data.engineIdx = (data.engineIdx + 1) % engines.length; save(); updateEngineUI(); },
                 
-                search: () => {
-                    let q = el('searchInput').value.trim();
-                    if(!q) return;
-
-                    let targetUrl = engines[data.engineIdx].u;
-                    for (const [key, macro] of Object.entries(macros)) {
-                        if (q.endsWith(key)) {
-                            targetUrl = macro.u;
-                            q = q.slice(0, -key.length).trim();
-                            break;
-                        }
-                    }
-                    window.location.href = targetUrl + encodeURIComponent(q);
-                },
-
-                addLink: () => {
-                    const t = el('linkTitle').value;
-                    let u = el('linkUrl').value;
-                    if(t && u) {
-                        if(!u.startsWith('http')) u = 'https://' + u;
-                        data.links.push({t, u, i: 'ph-globe'});
-                        save(); renderLinks();
-                        el('linkTitle').value = ''; el('linkUrl').value = '';
-                    }
-                },
-                deleteLink: (i) => { if(confirm('Sil?')) { data.links.splice(i, 1); save(); renderLinks(); } },
-                addTodo: () => {
-                    const t = el('todoInput').value.trim();
-                    if(t) { data.todos.push({text:t, done:false}); save(); renderTodos(); el('todoInput').value=''; }
-                },
-                toggleTodoItem: (i) => { data.todos[i].done = !data.todos[i].done; save(); renderTodos(); },
-                deleteTodo: (i) => { data.todos.splice(i, 1); save(); renderTodos(); },
+                const w = data.widgets;
+                const hasActive = Object.values(w).some(x => x);
                 
-                toggleSettings: () => {
-                    const m = el('settingsModal');
-                    const isActive = m.classList.contains('modal-active');
-                    if(isActive) m.classList.remove('modal-active');
-                    else { 
-                        const p = el('todoPanel');
-                        if (p.classList.contains('translate-x-0')) safeApp.toggleTodo();
-                        m.classList.add('modal-active'); 
-                    }
-                },
-                toggleTodo: () => {
-                    const p = el('todoPanel');
-                    const o = el('todoOverlay');
-                    const isOpen = p.classList.contains('translate-x-0');
-
-                    if (isOpen) {
-                        p.classList.remove('translate-x-0');
-                        p.classList.add('translate-x-full');
-                        o.classList.add('hidden');
-                    } else {
-                        const m = el('settingsModal');
-                        if (m.classList.contains('modal-active')) m.classList.remove('modal-active');
-                        p.classList.remove('translate-x-full');
-                        p.classList.add('translate-x-0');
-                        o.classList.remove('hidden');
-                    }
-                },
-                reset: () => {
-                    if(confirm('Tüm ayarlar sıfırlansın mı?')) {
-                        storage.clear('hp_v7');
-                        location.reload();
-                    }
+                if(!hasActive) {
+                    container.classList.add('hidden');
+                    return;
                 }
-            };
-        })();
+                container.classList.remove('hidden');
+                container.innerHTML = '';
 
-        window.addEventListener('DOMContentLoaded', safeApp.init);
-    </script>
-</body>
-</html>
+                // 1. Weather Widget
+                if(w.weather) {
+                    container.innerHTML += `
+                        <div class="widget-card group">
+                            <div class="flex justify-between items-start">
+                                <i class="ph ph-cloud-sun text-2xl text-yellow-200"></i>
+                                <span class="text-[10px] uppercase opacity-50 font-bold">Hava</span>
+                            </div>
+                            <div id="widget-weather-val" class="text-xl font-bold mt-2">Yükleniyor...</div>
+                        </div>
+                    `;
+                }
+
+                // 2. Crypto Widget
+                if(w.crypto) {
+                    container.innerHTML += `
+                        <div class="widget-card group">
+                            <div class="flex justify-between items-start">
+                                <i class="ph ph-currency-btc text-2xl text-orange-400"></i>
+                                <span class="text-[10px] uppercase opacity-50 font-bold">BTC</span>
+                            </div>
+                            <div id="widget-crypto-val" class="text-xl font-bold mt-2 font-mono">...</div>
+                        </div>
+                    `;
+    

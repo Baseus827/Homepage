@@ -20,11 +20,12 @@
                     animation: { 
                         'fade-in': 'fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
                         'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                        'pop-in': 'popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards'
                     },
                     keyframes: { 
-                        fadeIn: { '0%': { opacity: '0', transform: 'scale(0.95)' }, '100%': { opacity: '1', transform: 'scale(1)' } },
-                        slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
+                        fadeIn: { '0%': { opacity: '0', transform: 'scale(0.98)' }, '100%': { opacity: '1', transform: 'scale(1)' } },
+                        slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        popIn: { '0%': { opacity: '0', transform: 'scale(0.9) translateY(10px)' }, '100%': { opacity: '1', transform: 'scale(1) translateY(0)' } }
                     }
                 }
             }
@@ -32,10 +33,10 @@
     </script>
     <style>
         body {
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            transition: background-image 0.8s ease-in-out;
+            /* Varsayılan arka plan, JS ile ezilecek */
+            background: linear-gradient(to bottom right, #1a1a1a, #000000);
+            transition: background 0.5s ease;
+            min-height: 100vh;
         }
         .glass {
             background: rgba(255, 255, 255, 0.08);
@@ -44,173 +45,170 @@
             border: 1px solid rgba(255, 255, 255, 0.15);
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
-        .glass-heavy {
-            background: rgba(20, 20, 20, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .glass-widget {
+            background: rgba(20, 20, 20, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
         .glass-input {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         .glass-input:focus {
-            background: rgba(255, 255, 255, 0.25);
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.2);
             border-color: rgba(255, 255, 255, 0.4);
         }
-        /* Custom Scrollbar for Todo */
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
         
-        .todo-item { transition: all 0.3s ease; }
         .todo-item.completed span { text-decoration: line-through; opacity: 0.5; }
+        
+        /* Renk Seçici Yuvarlağı */
+        .color-option {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .color-option:hover { transform: scale(1.1); }
+        .color-option.active { border-color: white; transform: scale(1.1); }
     </style>
 </head>
-<body class="h-screen w-full flex flex-col items-center justify-center text-white overflow-hidden select-none relative font-sans">
-
-    <!-- Arkaplan Overlay -->
-    <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/60 z-0 pointer-events-none"></div>
+<body class="w-full flex flex-col items-center justify-center text-white overflow-hidden select-none relative font-sans">
 
     <!-- Üst Kontroller -->
     <div class="absolute top-0 left-0 w-full p-6 flex justify-between items-start z-20">
-        <!-- Sol: Basit Hava Durumu / Lokasyon (Statik Şimdilik) -->
-        <div class="flex items-center gap-2 opacity-70 hover:opacity-100 transition duration-300">
-            <i class="ph ph-map-pin text-xl"></i>
-            <span class="text-sm font-medium tracking-wide">İstanbul, TR</span>
+        <!-- Sol: Saat/Tarih Widget'ı -->
+        <div class="flex flex-col opacity-80 hover:opacity-100 transition duration-300">
+            <span id="miniDate" class="text-xs font-bold tracking-widest uppercase text-white/60">...</span>
+            <div class="flex items-center gap-2">
+                <i class="ph ph-map-pin text-lg"></i>
+                <span class="text-sm font-medium">İstanbul</span>
+            </div>
         </div>
 
-        <!-- Sağ: Ayarlar ve Todo Toggle -->
-        <div class="flex gap-4">
+        <!-- Sağ: Araçlar -->
+        <div class="flex gap-3">
             <button onclick="toggleTodo()" class="p-3 rounded-full glass hover:bg-white/20 transition duration-300 group relative">
                 <i class="ph ph-check-square text-xl"></i>
                 <span id="todoCountBadge" class="absolute -top-1 -right-1 bg-blue-500 text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
             </button>
-            <button onclick="toggleSettings()" class="p-3 rounded-full glass hover:bg-white/20 transition duration-300 group">
-                <i class="ph ph-gear text-xl group-hover:rotate-90 transition-transform duration-500"></i>
+            <button onclick="toggleWidget()" class="p-3 rounded-full glass hover:bg-white/20 transition duration-300 group" id="settingsBtn">
+                <i class="ph ph-sliders-horizontal text-xl group-hover:rotate-90 transition-transform duration-500"></i>
             </button>
         </div>
     </div>
 
     <!-- Ana İçerik -->
-    <main class="z-10 w-full max-w-4xl px-6 flex flex-col items-center gap-10 animate-fade-in relative">
+    <main class="z-10 w-full max-w-4xl px-6 flex flex-col items-center gap-12 animate-fade-in relative">
         
-        <!-- Saat ve Tarih -->
-        <div class="text-center group cursor-default select-none">
-            <h1 id="clock" class="text-8xl md:text-[10rem] font-bold tracking-tighter leading-none drop-shadow-2xl bg-clip-text text-transparent bg-gradient-to-b from-white to-white/70">00:00</h1>
-            <p id="date" class="text-lg md:text-2xl font-light text-blue-100/80 mt-2 tracking-[0.2em] uppercase">Yükleniyor...</p>
+        <!-- Büyük Saat -->
+        <div class="text-center group cursor-default select-none pt-10">
+            <h1 id="clock" class="text-[6rem] md:text-[11rem] font-bold tracking-tighter leading-none drop-shadow-2xl bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60">00:00</h1>
+            <div class="text-center mt-2 animate-slide-up" style="animation-delay: 0.1s;">
+                <h2 class="text-xl md:text-3xl font-light drop-shadow-md text-white/90">
+                    <span id="greetingTime">Merhaba</span>, <span id="userNameDisplay" class="font-semibold text-white border-b border-transparent hover:border-white/50 transition-all cursor-pointer">Kullanıcı</span>.
+                </h2>
+            </div>
         </div>
 
-        <!-- Selamlama -->
-        <div class="text-center animate-slide-up" style="animation-delay: 0.1s;">
-            <h2 class="text-2xl md:text-3xl font-light drop-shadow-md">
-                <span id="greetingTime">Merhaba</span>, <span id="userNameDisplay" class="font-semibold text-white border-b border-white/30 hover:border-white transition-all cursor-pointer" onclick="toggleSettings()">Kullanıcı</span>.
-            </h2>
-        </div>
-
-        <!-- Gelişmiş Arama Çubuğu -->
+        <!-- Arama Çubuğu -->
         <div class="w-full max-w-2xl relative group animate-slide-up" style="animation-delay: 0.2s;">
-            <!-- Arama Motoru Seçici -->
-            <button onclick="cycleSearchEngine()" class="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-xl hover:bg-white/10 transition flex items-center gap-2 text-gray-300 hover:text-white z-20" title="Arama motorunu değiştir">
+            <button onclick="cycleSearchEngine()" class="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-xl hover:bg-white/10 transition flex items-center gap-2 text-gray-300 hover:text-white z-20">
                 <i id="searchIcon" class="ph ph-google-logo text-xl"></i>
-                <i class="ph ph-caret-down text-xs opacity-50"></i>
             </button>
-            
             <input 
                 type="text" 
                 id="searchInput"
                 placeholder="Google'da ara..." 
-                class="w-full py-5 pl-16 pr-6 rounded-2xl glass-input text-white placeholder-gray-400 focus:outline-none transition-all duration-300 text-xl shadow-2xl backdrop-blur-md"
+                class="w-full py-4 pl-14 pr-6 rounded-2xl glass-input text-white placeholder-gray-400 focus:outline-none transition-all duration-300 text-lg shadow-2xl backdrop-blur-md"
                 autocomplete="off"
                 autofocus
             >
-            <div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-50 transition text-xs border border-white/30 px-2 py-1 rounded">Enter</div>
         </div>
 
-        <!-- Hızlı Linkler -->
-        <div id="linksContainer" class="grid grid-cols-4 md:grid-cols-6 gap-4 md:gap-6 mt-2 w-full max-w-3xl animate-slide-up" style="animation-delay: 0.3s;">
-            <!-- Linkler JS ile render edilecek -->
+        <!-- Linkler -->
+        <div id="linksContainer" class="grid grid-cols-4 md:grid-cols-6 gap-4 mt-4 w-full max-w-3xl animate-slide-up" style="animation-delay: 0.3s;">
+            <!-- Linkler buraya gelecek -->
         </div>
-
     </main>
 
-    <!-- TODO Sidebar (Sağdan Kayan Panel) -->
-    <div id="todoPanel" class="fixed top-0 right-0 h-full w-80 glass-heavy z-40 transform translate-x-full transition-transform duration-500 ease-in-out shadow-[-10px_0_30px_rgba(0,0,0,0.5)] flex flex-col">
-        <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/20">
-            <h3 class="font-bold text-lg flex items-center gap-2"><i class="ph ph-check-square"></i> Görevler</h3>
-            <button onclick="toggleTodo()" class="hover:text-red-400 transition"><i class="ph ph-x text-xl"></i></button>
-        </div>
-        
-        <!-- Liste -->
-        <div class="flex-1 overflow-y-auto p-4 space-y-2 custom-scroll" id="todoList">
-            <!-- Todo items will be here -->
-            <div class="text-center text-white/30 mt-10 text-sm">Henüz bir görev yok.</div>
+    <!-- ÖZELLEŞTİRME WIDGET'I (Floating Panel) -->
+    <div id="settingsWidget" class="fixed top-24 right-6 w-80 glass-widget rounded-3xl p-6 z-50 hidden opacity-0 transform scale-95 transition-all duration-300 origin-top-right">
+        <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-white/80">Stüdyo</h3>
+            <button onclick="toggleWidget()" class="hover:text-red-400 transition text-white/50"><i class="ph ph-x text-lg"></i></button>
         </div>
 
-        <!-- Yeni Görev Ekleme -->
-        <div class="p-4 border-t border-white/10 bg-black/20">
-            <div class="flex gap-2">
-                <input type="text" id="newTodoInput" placeholder="Yeni görev..." class="flex-1 bg-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:bg-white/20 transition">
-                <button onclick="addTodo()" class="bg-blue-600 hover:bg-blue-500 text-white rounded-lg px-3 py-2 transition"><i class="ph ph-plus"></i></button>
+        <div class="space-y-6">
+            <!-- İsim -->
+            <div>
+                <label class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2 block">Kullanıcı Adı</label>
+                <input type="text" id="nameInput" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition text-white" placeholder="İsminiz">
             </div>
-        </div>
-    </div>
 
-    <!-- Ayarlar Modalı -->
-    <div id="settingsModal" class="hidden absolute z-50 inset-0 bg-black/80 flex items-center justify-center backdrop-blur-sm opacity-0 transition-opacity duration-300">
-        <div class="glass-heavy p-8 rounded-3xl w-full max-w-lg m-4 shadow-2xl transform scale-95 transition-transform duration-300" id="modalContent">
-            <div class="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
-                <h3 class="text-2xl font-bold flex items-center gap-2"><i class="ph ph-sliders"></i> Ayarlar</h3>
-                <button onclick="toggleSettings()" class="hover:text-red-400 transition bg-white/5 p-2 rounded-full"><i class="ph ph-x text-xl"></i></button>
+            <!-- Renk Paleti -->
+            <div>
+                <label class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-3 block">Tema Rengi</label>
+                <div class="grid grid-cols-5 gap-3" id="colorPalette">
+                    <!-- JS ile doldurulacak -->
+                </div>
+                <div class="mt-3 flex items-center gap-3 bg-white/5 p-2 rounded-lg border border-white/10">
+                    <input type="color" id="customColorPicker" class="w-8 h-8 rounded cursor-pointer bg-transparent border-none" value="#000000" title="Özel Renk">
+                    <span class="text-xs text-gray-400">Özel Renk Seç</span>
+                </div>
+            </div>
+
+            <!-- Hızlı Ekle -->
+            <div class="pt-4 border-t border-white/10">
+                <label class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2 block">Kısayol Ekle</label>
+                <div class="space-y-2">
+                    <input type="text" id="newLinkTitle" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none" placeholder="Başlık (Örn: Haberler)">
+                    <input type="text" id="newLinkUrl" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none" placeholder="URL (https://...)">
+                    <button onclick="addNewLink()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg text-xs font-bold transition">Ekle</button>
+                </div>
             </div>
             
-            <div class="space-y-6">
-                <!-- İsim -->
-                <div class="space-y-2">
-                    <label class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Görünen İsim</label>
-                    <input type="text" id="nameInput" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-blue-500 transition text-lg" placeholder="Adınız">
-                </div>
-
-                <!-- Arkaplan Teması -->
-                <div class="space-y-2">
-                    <label class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Arkaplan Teması</label>
-                    <div class="grid grid-cols-3 gap-3">
-                        <button onclick="changeBackground('nature')" class="p-3 rounded-xl bg-white/5 hover:bg-green-500/20 border border-white/10 hover:border-green-500/50 transition text-sm flex flex-col items-center gap-1 group">
-                            <i class="ph ph-tree text-2xl mb-1 text-green-300 group-hover:scale-110 transition"></i> Doğa
-                        </button>
-                        <button onclick="changeBackground('city')" class="p-3 rounded-xl bg-white/5 hover:bg-purple-500/20 border border-white/10 hover:border-purple-500/50 transition text-sm flex flex-col items-center gap-1 group">
-                            <i class="ph ph-buildings text-2xl mb-1 text-purple-300 group-hover:scale-110 transition"></i> Şehir
-                        </button>
-                        <button onclick="changeBackground('abstract')" class="p-3 rounded-xl bg-white/5 hover:bg-blue-500/20 border border-white/10 hover:border-blue-500/50 transition text-sm flex flex-col items-center gap-1 group">
-                            <i class="ph ph-paint-brush-broad text-2xl mb-1 text-blue-300 group-hover:scale-110 transition"></i> Soyut
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Link Ekleme -->
-                <div class="pt-4 border-t border-white/10 space-y-3">
-                    <label class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Hızlı Erişim Ekle</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="newLinkTitle" class="w-1/3 bg-white/5 border border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:border-blue-500 transition" placeholder="Başlık">
-                        <input type="text" id="newLinkUrl" class="w-2/3 bg-white/5 border border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:border-blue-500 transition" placeholder="URL">
-                    </div>
-                    <button onclick="addNewLink()" class="w-full bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl transition font-medium shadow-lg shadow-blue-900/20">Ekle</button>
-                </div>
-
-                <div class="pt-2 text-center">
-                     <button onclick="resetLinks()" class="text-xs text-red-400 hover:text-red-300 hover:underline transition">Ayarları Sıfırla</button>
-                </div>
+            <div class="text-center pt-2">
+                 <button onclick="resetApp()" class="text-[10px] text-red-400/60 hover:text-red-400 transition">Varsayılanlara Dön</button>
             </div>
         </div>
     </div>
 
-    <!-- Overlay for Todo (Click outside to close) -->
-    <div id="todoOverlay" onclick="toggleTodo()" class="fixed inset-0 z-30 hidden"></div>
+    <!-- TODO Sidebar -->
+    <div id="todoPanel" class="fixed top-0 right-0 h-full w-80 glass-widget z-50 transform translate-x-full transition-transform duration-300 shadow-2xl flex flex-col border-l border-white/10">
+        <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/20">
+            <h3 class="font-bold text-sm uppercase tracking-wider flex items-center gap-2">Görevler</h3>
+            <button onclick="toggleTodo()" class="hover:text-red-400 transition text-white/50"><i class="ph ph-x text-lg"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 space-y-2" id="todoList"></div>
+        <div class="p-4 bg-black/20">
+            <div class="flex gap-2">
+                <input type="text" id="newTodoInput" placeholder="Görev ekle..." class="flex-1 bg-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:bg-white/20 transition">
+                <button onclick="addTodo()" class="bg-white/10 hover:bg-blue-600 text-white rounded-lg px-3 py-2 transition"><i class="ph ph-plus"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay -->
+    <div id="overlay" onclick="closeAllPanels()" class="fixed inset-0 z-40 hidden bg-black/20 backdrop-blur-[1px]"></div>
 
     <script>
-        // --- State Management ---
+        // --- DATA & CONFIG ---
+        const colorThemes = [
+            { id: 'midnight', bg: 'linear-gradient(to bottom right, #0f172a, #000000)', preview: '#0f172a' },
+            { id: 'sunset', bg: 'linear-gradient(to bottom right, #4c0519, #000000)', preview: '#4c0519' }, // Rose/Red
+            { id: 'ocean', bg: 'linear-gradient(to bottom right, #0c4a6e, #020617)', preview: '#0c4a6e' }, // Sky/Blue
+            { id: 'forest', bg: 'linear-gradient(to bottom right, #064e3b, #022c22)', preview: '#064e3b' }, // Green
+            { id: 'purple', bg: 'linear-gradient(to bottom right, #3b0764, #000000)', preview: '#3b0764' }, // Purple
+        ];
+
         const defaultLinks = [
             { title: 'Youtube', url: 'https://youtube.com', icon: 'ph-youtube-logo' },
             { title: 'GitHub', url: 'https://github.com', icon: 'ph-github-logo' },
@@ -219,62 +217,166 @@
         ];
 
         const searchEngines = [
-            { name: 'Google', url: 'https://www.google.com/search?q=', icon: 'ph-google-logo', placeholder: "Google'da ara..." },
-            { name: 'YouTube', url: 'https://www.youtube.com/results?search_query=', icon: 'ph-youtube-logo', placeholder: "YouTube'da ara..." },
-            { name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=', icon: 'ph-mask-happy', placeholder: "DuckDuckGo'da ara..." },
-            { name: 'Bing', url: 'https://www.bing.com/search?q=', icon: 'ph-microsoft-logo', placeholder: "Bing'de ara..." }
+            { name: 'Google', url: 'https://www.google.com/search?q=', icon: 'ph-google-logo', placeholder: "Google..." },
+            { name: 'YouTube', url: 'https://www.youtube.com/results?search_query=', icon: 'ph-youtube-logo', placeholder: "YouTube..." },
+            { name: 'Bing', url: 'https://www.bing.com/search?q=', icon: 'ph-microsoft-logo', placeholder: "Bing..." }
         ];
 
-        let state = JSON.parse(localStorage.getItem('dashboardState')) || {
+        // State Init
+        let state = JSON.parse(localStorage.getItem('widgetHomeState')) || {
             name: 'Kaptan',
             links: defaultLinks,
-            bgCategory: 'nature', // nature, city, abstract
-            bgUrl: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=2074&auto=format&fit=crop',
+            themeMode: 'preset', // 'preset' or 'custom'
+            themeValue: 'midnight', // id or hex code
             engineIndex: 0,
             todos: []
         };
 
-        // --- DOM Elements ---
+        // --- DOM REFERENCES ---
         const els = {
             clock: document.getElementById('clock'),
-            date: document.getElementById('date'),
+            miniDate: document.getElementById('miniDate'),
             greeting: document.getElementById('greetingTime'),
             nameDisplay: document.getElementById('userNameDisplay'),
             nameInput: document.getElementById('nameInput'),
             searchInput: document.getElementById('searchInput'),
             searchIcon: document.getElementById('searchIcon'),
             linksContainer: document.getElementById('linksContainer'),
+            widget: document.getElementById('settingsWidget'),
             todoPanel: document.getElementById('todoPanel'),
             todoList: document.getElementById('todoList'),
-            newTodoInput: document.getElementById('newTodoInput'),
             todoBadge: document.getElementById('todoCountBadge'),
-            settingsModal: document.getElementById('settingsModal'),
-            modalContent: document.getElementById('modalContent')
+            overlay: document.getElementById('overlay'),
+            colorPalette: document.getElementById('colorPalette'),
+            colorPicker: document.getElementById('customColorPicker')
         };
 
-        // --- Core Functions ---
+        // --- CORE FUNCTIONS ---
 
         function saveState() {
-            localStorage.setItem('dashboardState', JSON.stringify(state));
+            localStorage.setItem('widgetHomeState', JSON.stringify(state));
         }
 
-        function updateClock() {
+        // Clock Logic
+        function updateTime() {
             const now = new Date();
             els.clock.textContent = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-            els.date.textContent = now.toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            els.miniDate.textContent = now.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' });
             
             const h = now.getHours();
-            let greet = 'İyi Geceler';
-            if (h >= 5 && h < 12) greet = 'Günaydın';
-            else if (h >= 12 && h < 18) greet = 'Tünaydın';
-            else if (h >= 18 && h < 23) greet = 'İyi Akşamlar';
-            els.greeting.textContent = greet;
+            els.greeting.textContent = h < 6 ? 'İyi Geceler' : h < 12 ? 'Günaydın' : h < 18 ? 'Tünaydın' : 'İyi Akşamlar';
         }
 
-        // --- Search Engine Logic ---
+        // Theme Logic
+        function applyTheme() {
+            let bgStyle = '';
+            
+            // UI Update for Palette
+            els.colorPalette.innerHTML = '';
+            colorThemes.forEach(theme => {
+                const isActive = state.themeMode === 'preset' && state.themeValue === theme.id;
+                const circle = document.createElement('div');
+                circle.className = `color-option ${isActive ? 'active' : ''}`;
+                circle.style.backgroundColor = theme.preview;
+                circle.onclick = () => setTheme('preset', theme.id);
+                els.colorPalette.appendChild(circle);
+                
+                if (isActive) bgStyle = theme.bg;
+            });
+
+            if (state.themeMode === 'custom') {
+                bgStyle = state.themeValue; // Expecting Hex or solid color
+                els.colorPicker.value = state.themeValue;
+            } else if (!bgStyle) {
+                // Fallback to default if preset not found
+                bgStyle = colorThemes[0].bg; 
+            }
+
+            document.body.style.background = bgStyle;
+        }
+
+        function setTheme(mode, value) {
+            state.themeMode = mode;
+            state.themeValue = value;
+            saveState();
+            applyTheme();
+        }
+
+        els.colorPicker.addEventListener('input', (e) => {
+            document.body.style.background = e.target.value; // Realtime preview
+        });
+
+        els.colorPicker.addEventListener('change', (e) => {
+            setTheme('custom', e.target.value);
+        });
+
+
+        // Widget & Panel UI Logic
+        function toggleWidget() {
+            const isHidden = els.widget.classList.contains('hidden');
+            if (isHidden) {
+                closeTodo(); // Close other panel if open
+                els.widget.classList.remove('hidden');
+                setTimeout(() => {
+                    els.widget.classList.remove('opacity-0', 'scale-95');
+                }, 10);
+                els.overlay.classList.remove('hidden');
+                els.nameInput.value = state.name;
+                applyTheme(); // Refresh palette UI
+            } else {
+                closeWidget();
+            }
+        }
+
+        function closeWidget() {
+            els.widget.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => els.widget.classList.add('hidden'), 300);
+            checkOverlay();
+        }
+
+        function toggleTodo() {
+            const isClosed = els.todoPanel.classList.contains('translate-x-full');
+            if (isClosed) {
+                closeWidget(); // Close other panel
+                els.todoPanel.classList.remove('translate-x-full');
+                els.overlay.classList.remove('hidden');
+                renderTodos();
+            } else {
+                closeTodo();
+            }
+        }
+
+        function closeTodo() {
+            els.todoPanel.classList.add('translate-x-full');
+            checkOverlay();
+        }
+
+        function checkOverlay() {
+            // Only hide overlay if both panels are closed
+            const widgetHidden = els.widget.classList.contains('hidden') || els.widget.classList.contains('opacity-0');
+            const todoHidden = els.todoPanel.classList.contains('translate-x-full');
+            
+            if (widgetHidden && todoHidden) {
+                els.overlay.classList.add('hidden');
+            }
+        }
+
+        function closeAllPanels() {
+            closeWidget();
+            closeTodo();
+        }
+
+        // Name Logic
+        els.nameInput.addEventListener('input', (e) => {
+            state.name = e.target.value || 'Kullanıcı';
+            els.nameDisplay.textContent = state.name;
+            saveState();
+        });
+
+        // Search Logic
         function updateSearchUI() {
             const engine = searchEngines[state.engineIndex];
-            els.searchIcon.className = `ph ${engine.icon} text-xl transition-all duration-300`;
+            els.searchIcon.className = `ph ${engine.icon} text-xl`;
             els.searchInput.placeholder = engine.placeholder;
         }
 
@@ -291,356 +393,22 @@
             }
         });
 
-        // --- Background Logic ---
-        const bgCollections = {
-            nature: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=2074&auto=format&fit=crop', // Landscape
-            city: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?q=80&w=2064&auto=format&fit=crop', // City night
-            abstract: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070&auto=format&fit=crop' // Abstract fluid
-        };
-
-        function changeBackground(category) {
-            state.bgCategory = category;
-            state.bgUrl = bgCollections[category];
-            saveState();
-            applyBackground();
-        }
-
-        function applyBackground() {
-            document.body.style.backgroundImage = `url('${state.bgUrl}')`;
-        }
-
-        // --- Todo List Logic ---
-        function toggleTodo() {
-            const isOpen = !els.todoPanel.classList.contains('translate-x-full');
-            if (isOpen) {
-                els.todoPanel.classList.add('translate-x-full');
-                document.getElementById('todoOverlay').classList.add('hidden');
-            } else {
-                els.todoPanel.classList.remove('translate-x-full');
-                document.getElementById('todoOverlay').classList.remove('hidden');
-                els.newTodoInput.focus();
-            }
-        }
-
+        // Todo Logic
         function renderTodos() {
             els.todoList.innerHTML = '';
-            const pendingCount = state.todos.filter(t => !t.completed).length;
-            
-            if (pendingCount > 0) {
-                els.todoBadge.textContent = pendingCount;
-                els.todoBadge.classList.remove('hidden');
-            } else {
-                els.todoBadge.classList.add('hidden');
-            }
+            const pending = state.todos.filter(t => !t.completed).length;
+            els.todoBadge.textContent = pending;
+            els.todoBadge.classList.toggle('hidden', pending === 0);
 
             if (state.todos.length === 0) {
-                els.todoList.innerHTML = '<div class="text-center text-white/30 mt-10 text-sm">Görev listeniz boş.</div>';
+                els.todoList.innerHTML = '<div class="text-center text-white/30 mt-10 text-xs">Görev yok.</div>';
                 return;
             }
 
             state.todos.forEach((todo, idx) => {
                 const div = document.createElement('div');
-                div.className = `todo-item flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 mb-2 ${todo.completed ? 'completed' : ''}`;
+                div.className = `flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 todo-item ${todo.completed ? 'completed' : ''}`;
                 div.innerHTML = `
-                    <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleTodoItem(${idx})">
-                        <div class="w-5 h-5 rounded border border-white/30 flex items-center justify-center ${todo.completed ? 'bg-green-500 border-green-500' : ''}">
-                            ${todo.completed ? '<i class="ph ph-check text-xs"></i>' : ''}
-                        </div>
-                        <span class="text-sm select-none break-all">${todo.text}</span>
-                    </div>
-                    <button onclick="deleteTodo(${idx})" class="text-white/20 hover:text-red-400 p-1"><i class="ph ph-trash"></i></button>
-                `;
-                els.todoList.appendChild(div);
-            });
-        }
-
-        function addTodo() {
-            const text = els.newTodoInput.value.trim();
-            if (text) {
-                state.todos.push({ text, completed: false });
-                els.newTodoInput.value = '';
-                saveState();
-                renderTodos();
-            }
-        }
-
-        // Allow Enter key to add todo
-        els.newTodoInput.addEventListener('keypress', (e) => {
-            if(e.key === 'Enter') addTodo();
-        });
-
-        function toggleTodoItem(idx) {
-            state.todos[idx].completed = !state.todos[idx].completed;
-            saveState();
-            renderTodos();
-        }
-
-        function deleteTodo(i            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .glass-dark {
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        /* Search input glow */
-        input:focus { box-shadow: 0 0 15px rgba(255, 255, 255, 0.3); }
-    </style>
-</head>
-<body class="h-screen w-full flex flex-col items-center justify-center text-white overflow-hidden select-none relative">
-
-    <!-- Arkaplan Karartma Katmanı -->
-    <div class="absolute inset-0 bg-black/40 z-0"></div>
-
-    <!-- Ayarlar Butonu -->
-    <button onclick="toggleSettings()" class="absolute top-6 right-6 z-20 p-2 rounded-full hover:bg-white/10 transition duration-300 group">
-        <i class="ph ph-gear text-2xl group-hover:rotate-90 transition-transform duration-500"></i>
-    </button>
-
-    <!-- Ana İçerik -->
-    <main class="z-10 w-full max-w-3xl px-6 flex flex-col items-center gap-8 animate-fade-in">
-        
-        <!-- Saat ve Tarih -->
-        <div class="text-center group cursor-default">
-            <h1 id="clock" class="text-7xl md:text-9xl font-bold tracking-tight drop-shadow-lg font-mono">00:00</h1>
-            <p id="date" class="text-lg md:text-xl font-light opacity-80 mt-2 tracking-widest uppercase">Yükleniyor...</p>
-        </div>
-
-        <!-- Selamlama -->
-        <div class="text-center">
-            <h2 class="text-2xl md:text-3xl font-medium drop-shadow-md">
-                <span id="greetingTime">Merhaba</span>, <span id="userNameDisplay" class="font-bold text-blue-200 border-b-2 border-transparent hover:border-blue-200 transition-all cursor-pointer" onclick="toggleSettings()">Kullanıcı</span>.
-            </h2>
-        </div>
-
-        <!-- Arama Çubuğu -->
-        <div class="w-full max-w-xl relative group">
-            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300">
-                <i class="ph ph-magnifying-glass text-xl"></i>
-            </div>
-            <input 
-                type="text" 
-                id="searchInput"
-                placeholder="Google'da ara..." 
-                class="w-full py-4 pl-12 pr-6 rounded-2xl glass text-white placeholder-gray-300 focus:outline-none focus:bg-white/20 transition-all duration-300 text-lg shadow-lg"
-                autocomplete="off"
-            >
-        </div>
-
-        <!-- Hızlı Linkler (Grid) -->
-        <div id="linksContainer" class="grid grid-cols-4 md:grid-cols-5 gap-4 mt-4">
-            <!-- Linkler JS ile buraya eklenecek -->
-        </div>
-
-    </main>
-
-    <!-- Ayarlar Modalı -->
-    <div id="settingsModal" class="hidden absolute z-30 inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm opacity-0 transition-opacity duration-300">
-        <div class="glass-dark p-8 rounded-3xl w-full max-w-md m-4 shadow-2xl transform scale-95 transition-transform duration-300" id="modalContent">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold">Ayarlar</h3>
-                <button onclick="toggleSettings()" class="hover:text-red-400 transition"><i class="ph ph-x text-2xl"></i></button>
-            </div>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm text-gray-400 mb-1">İsminiz</label>
-                    <input type="text" id="nameInput" class="w-full bg-white/10 rounded-lg p-3 focus:outline-none focus:ring-2 ring-blue-500 transition" placeholder="Adınızı girin">
-                </div>
-                
-                <div class="pt-4 border-t border-white/10">
-                    <label class="block text-sm text-gray-400 mb-2">Yeni Kısayol Ekle</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="newLinkTitle" class="w-1/3 bg-white/10 rounded-lg p-3 text-sm focus:outline-none" placeholder="Başlık (örn: YouTube)">
-                        <input type="text" id="newLinkUrl" class="w-2/3 bg-white/10 rounded-lg p-3 text-sm focus:outline-none" placeholder="URL (https://...)">
-                    </div>
-                    <button onclick="addNewLink()" class="mt-3 w-full bg-blue-600 hover:bg-blue-500 text-white p-2 rounded-lg transition font-medium">Ekle</button>
-                </div>
-
-                <div class="pt-2">
-                     <button onclick="resetLinks()" class="text-xs text-red-400 hover:text-red-300 underline">Varsayılan Linkleri Sıfırla</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="absolute bottom-4 text-xs text-white/40 z-10 font-light">
-        Odaklan ve üret.
-    </footer>
-
-    <script>
-        // --- DOM Elements ---
-        const clockEl = document.getElementById('clock');
-        const dateEl = document.getElementById('date');
-        const greetingTimeEl = document.getElementById('greetingTime');
-        const userNameDisplay = document.getElementById('userNameDisplay');
-        const searchInput = document.getElementById('searchInput');
-        const linksContainer = document.getElementById('linksContainer');
-        const settingsModal = document.getElementById('settingsModal');
-        const modalContent = document.getElementById('modalContent');
-        const nameInput = document.getElementById('nameInput');
-
-        // --- State Management (LocalStorage) ---
-        const defaultLinks = [
-            { title: 'Youtube', url: 'https://youtube.com', icon: 'ph-youtube-logo' },
-            { title: 'Twitter', url: 'https://twitter.com', icon: 'ph-twitter-logo' },
-            { title: 'Instagram', url: 'https://instagram.com', icon: 'ph-instagram-logo' },
-            { title: 'Reddit', url: 'https://reddit.com', icon: 'ph-reddit-logo' },
-            { title: 'GitHub', url: 'https://github.com', icon: 'ph-github-logo' }
-        ];
-
-        let userState = JSON.parse(localStorage.getItem('userState')) || {
-            name: 'Gezgin',
-            links: defaultLinks
-        };
-
-        // --- Clock & Date Function ---
-        function updateClock() {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            clockEl.textContent = `${hours}:${minutes}`;
-
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            dateEl.textContent = now.toLocaleDateString('tr-TR', options);
-
-            // Selamlama güncelleme
-            const h = now.getHours();
-            if (h >= 5 && h < 12) greetingTimeEl.textContent = 'Günaydın';
-            else if (h >= 12 && h < 18) greetingTimeEl.textContent = 'Tünaydın';
-            else if (h >= 18 && h < 23) greetingTimeEl.textContent = 'İyi Akşamlar';
-            else greetingTimeEl.textContent = 'İyi Geceler';
-        }
-
-        // --- Search Function ---
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                const query = searchInput.value;
-                if (query.trim()) {
-                    window.location.href = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-                }
-            }
-        });
-
-        // --- Links Rendering ---
-        function renderLinks() {
-            linksContainer.innerHTML = '';
-            userState.links.forEach((link, index) => {
-                const linkEl = document.createElement('a');
-                linkEl.href = link.url;
-                linkEl.className = 'flex flex-col items-center justify-center p-4 rounded-xl glass hover:bg-white/20 transition-all duration-300 group relative';
-                
-                // İkon belirleme (basit mantık veya generic ikon)
-                let iconClass = link.icon || 'ph-globe';
-                if(!link.icon) {
-                    // Basit domain kontrolü
-                    if(link.url.includes('google')) iconClass = 'ph-google-logo';
-                    else if(link.url.includes('linkedin')) iconClass = 'ph-linkedin-logo';
-                    else if(link.url.includes('amazon')) iconClass = 'ph-amazon-logo';
-                    else if(link.url.includes('netflix')) iconClass = 'ph-film-strip';
-                }
-
-                linkEl.innerHTML = `
-                    <i class="ph ${iconClass} text-3xl mb-1 group-hover:scale-110 transition-transform"></i>
-                    <span class="text-xs font-medium opacity-80 group-hover:opacity-100">${link.title}</span>
-                    <button onclick="deleteLink(event, ${index})" class="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 opacity-0 group-hover:opacity-100 transition shadow-sm hover:bg-red-600">
-                        <i class="ph ph-minus text-white text-xs font-bold"></i>
-                    </button>
-                `;
-                linksContainer.appendChild(linkEl);
-            });
-            
-            // "Ekle" butonu (Tasarım bütünlüğü için linklerin sonuna)
-            const addBtn = document.createElement('div');
-            addBtn.onclick = toggleSettings;
-            addBtn.className = 'flex flex-col items-center justify-center p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-300 cursor-pointer border-dashed opacity-50 hover:opacity-100';
-            addBtn.innerHTML = `
-                <i class="ph ph-plus text-2xl mb-1"></i>
-                <span class="text-xs font-medium">Ekle</span>
-            `;
-            linksContainer.appendChild(addBtn);
-        }
-
-        // --- Link Management ---
-        function addNewLink() {
-            const title = document.getElementById('newLinkTitle').value;
-            let url = document.getElementById('newLinkUrl').value;
-
-            if (title && url) {
-                if (!url.startsWith('http')) url = 'https://' + url;
-                userState.links.push({ title, url, icon: 'ph-link' });
-                saveState();
-                renderLinks();
-                document.getElementById('newLinkTitle').value = '';
-                document.getElementById('newLinkUrl').value = '';
-                toggleSettings(); // Modalı kapat
-            }
-        }
-
-        function deleteLink(e, index) {
-            e.preventDefault(); // Linke gitmeyi engelle
-            e.stopPropagation();
-            if(confirm('Bu kısayolu silmek istiyor musunuz?')) {
-                userState.links.splice(index, 1);
-                saveState();
-                renderLinks();
-            }
-        }
-
-        function resetLinks() {
-            if(confirm('Tüm linkler varsayılan ayarlara dönecek?')) {
-                userState.links = [...defaultLinks];
-                saveState();
-                renderLinks();
-            }
-        }
-
-        // --- Settings Modal Logic ---
-        function toggleSettings() {
-            const isHidden = settingsModal.classList.contains('hidden');
-            if (isHidden) {
-                settingsModal.classList.remove('hidden');
-                // Trigger reflow
-                void settingsModal.offsetWidth;
-                settingsModal.classList.remove('opacity-0');
-                modalContent.classList.remove('scale-95');
-                modalContent.classList.add('scale-100');
-                nameInput.value = userState.name;
-            } else {
-                settingsModal.classList.add('opacity-0');
-                modalContent.classList.remove('scale-100');
-                modalContent.classList.add('scale-95');
-                setTimeout(() => {
-                    settingsModal.classList.add('hidden');
-                }, 300);
-            }
-        }
-
-        // İsim değişikliğini kaydet
-        nameInput.addEventListener('input', (e) => {
-            userState.name = e.target.value || 'Kullanıcı';
-            userNameDisplay.textContent = userState.name;
-            saveState();
-        });
-
-        function saveState() {
-            localStorage.setItem('userState', JSON.stringify(userState));
-            userNameDisplay.textContent = userState.name;
-        }
-
-        // --- Init ---
-        setInterval(updateClock, 1000);
-        updateClock();
-        renderLinks();
-        userNameDisplay.textContent = userState.name;
-        
-        // Modaldan dışarı tıklayınca kapatma
-        settingsModal.addEventListener('click', (e) => {
-            if (e.target === settingsModal) toggleSettings();
-        });
-
-    </script>
-</body>
-</html>
+                    <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleTodoStatus(${idx})">
+                        <div class="w-4 h-4 rounded border border-white/30 flex items-center justify-center ${todo.completed ? 'bg-green-500 border-green-500' : ''}">
+                            $

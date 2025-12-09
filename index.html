@@ -7,239 +7,390 @@
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
     
+    <!-- 1. Fontlar (Google Fonts) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/@phosphor-icons/web" async></script>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        window.tailwind = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
-                    animation: { 'fade-in': 'fadeIn 0.3s ease-out forwards' },
-                    keyframes: { fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } } }
-                }
-            }
-        }
-    </script>
+    
+    <!-- 2. İkonlar (FontAwesome CSS - JS Gerektirmez) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        :root { --bg-gradient: linear-gradient(to bottom right, #0f172a, #000000); }
+        /* --- TEMEL AYARLAR (Reset) --- */
+        :root {
+            --bg-gradient: linear-gradient(to bottom right, #0f172a, #000000);
+            --glass-bg: rgba(255, 255, 255, 0.07);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-muted: rgba(255, 255, 255, 0.6);
+            --accent: #3b82f6;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
         body {
             background: var(--bg-gradient);
+            background-attachment: fixed; /* Mobilde arkaplanın kaymasını önler */
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
             min-height: 100vh;
-            color: white;
-            overscroll-behavior-y: none;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
+            overflow-x: hidden; /* Yatay kaydırmayı engelle */
+            display: flex;
+            flex-direction: column;
         }
+
+        /* --- STİL SINIFLARI (CSS CLASSES) --- */
+        
+        /* Glassmorphism Paneller */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
-        }
-        .glass-input {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            color: white;
-        }
-        .glass-input:focus {
-            background: rgba(255, 255, 255, 0.15);
-            outline: none;
-            border-color: rgba(255, 255, 255, 0.3);
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            transition: transform 0.2s ease, background 0.2s;
         }
         
-        /* Grid ve Widget Stilleri */
+        .glass-panel:active { transform: scale(0.98); }
+
+        /* Butonlar */
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            position: relative;
+        }
+        .icon-btn:hover { background: rgba(255,255,255,0.1); }
+
+        /* Header */
+        header {
+            position: absolute;
+            top: 0; left: 0; width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 100;
+        }
+
+        /* Ana İçerik */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px 20px 20px; /* Header için üst boşluk */
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Saat */
+        .clock-container { text-align: center; margin-bottom: 40px; }
+        #clock {
+            font-size: clamp(4rem, 15vw, 8rem); /* Responsive Font */
+            font-weight: 700;
+            line-height: 1;
+            font-family: 'JetBrains Mono', monospace;
+            background: linear-gradient(to bottom, #fff, rgba(255,255,255,0.5));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .greeting { font-size: 1.2rem; font-weight: 300; margin-top: 10px; opacity: 0.9; }
+        .user-name { font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.3); }
+
+        /* Arama */
+        .search-container {
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+            margin-bottom: 40px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 16px 50px; /* İkonlar için boşluk */
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 1.1rem;
+            outline: none;
+        }
+        .search-input:focus { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
+        .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); opacity: 0.5; }
+        .engine-badge {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            opacity: 0.6;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+        .engine-badge:hover { background: rgba(255,255,255,0.1); opacity: 1; }
+
+        /* WIDGET GRID (CSS GRID - JS Bağımsız) */
         .widget-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
+            grid-template-columns: repeat(2, 1fr); /* Mobilde 2 kolon */
+            gap: 12px;
             width: 100%;
+            margin-bottom: 30px;
         }
         @media (min-width: 768px) {
-            .widget-grid { grid-template-columns: repeat(4, 1fr); }
+            .widget-grid { grid-template-columns: repeat(4, 1fr); /* Masaüstünde 4 kolon */ }
         }
-        
+
         .widget-card {
-            @apply glass-panel rounded-2xl p-4 flex flex-col justify-between transition-all duration-300;
-            min-height: 140px;
+            padding: 16px;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
             position: relative;
         }
         
-        .col-span-1 { grid-column: span 1; }
-        .col-span-2 { grid-column: span 2; }
-
-        /* Edit Mode Styles */
-        .edit-mode .widget-card {
-            border: 1px dashed rgba(255,255,255,0.3);
-            animation: pulse-border 2s infinite;
-        }
-        @keyframes pulse-border { 0% { border-color: rgba(255,255,255,0.3); } 50% { border-color: rgba(255,255,255,0.6); } 100% { border-color: rgba(255,255,255,0.3); } }
-
+        .widget-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px; }
+        .widget-title { font-size: 0.7rem; text-transform: uppercase; font-weight: bold; opacity: 0.6; letter-spacing: 1px; }
+        .widget-icon { font-size: 1.5rem; opacity: 0.9; }
+        .widget-value { font-size: 1.25rem; font-weight: 700; }
+        
+        /* Widget Edit Controls */
         .widget-controls {
-            display: none;
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            gap: 5px;
-            z-index: 20;
+            position: absolute; top: 0; right: 0; padding: 5px;
+            display: none; gap: 4px; z-index: 10;
         }
+        .edit-mode .widget-card { border: 1px dashed rgba(255,255,255,0.5); background: rgba(0,0,0,0.2); }
         .edit-mode .widget-controls { display: flex; }
+        .ctrl-btn { width: 24px; height: 24px; border-radius: 50%; border: none; color: white; cursor: pointer; display: grid; place-items: center; font-size: 0.7rem; }
+        .btn-resize { background: #3b82f6; }
+        .btn-settings { background: #4b5563; }
+        .btn-delete { background: #ef4444; }
+
+        .col-span-2 { grid-column: span 2; }
+        .hidden { display: none; }
+
+        /* Linkler Grid */
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            width: 100%;
+            max-width: 600px;
+        }
+        @media (min-width: 600px) { .links-grid { grid-template-columns: repeat(5, 1fr); } }
+
+        .link-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            text-decoration: none;
+            color: white;
+            position: relative;
+        }
+        .link-icon { font-size: 1.5rem; margin-bottom: 5px; opacity: 0.8; }
+        .link-title { font-size: 0.75rem; opacity: 0.6; font-weight: 500; }
+        .link-card:hover { background: rgba(255,255,255,0.15); }
+        .link-delete {
+            position: absolute; top: -5px; right: -5px;
+            width: 20px; height: 20px; background: #ef4444;
+            border-radius: 50%; display: none; align-items: center; justify-content: center;
+            font-size: 0.7rem; border: none; color: white;
+        }
+        .link-card:hover .link-delete { display: flex; }
+
+        /* Add Widget Bar */
+        .add-widget-bar {
+            width: 100%; display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+        }
+        .add-btn {
+            padding: 8px 16px; border-radius: 20px; border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.05); color: white; cursor: pointer; font-size: 0.8rem; font-weight: 600;
+        }
+        .add-btn:hover { background: rgba(255,255,255,0.15); }
+
+        /* MODALS (Standart HTML/CSS) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
         
-        .hidden { display: none !important; }
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        .modal-content {
+            background: #1a1a1a;
+            border: 1px solid rgba(255,255,255,0.1);
+            width: 90%; max-width: 350px;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-title { font-size: 0.9rem; font-weight: bold; text-transform: uppercase; opacity: 0.7; }
         
-        .modal-enter { opacity: 0; transform: scale(0.95); pointer-events: none; }
-        .modal-active { opacity: 1; transform: scale(1); pointer-events: auto; }
-        .transition-all-300 { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; font-size: 0.75rem; opacity: 0.7; margin-bottom: 5px; }
+        .form-input { 
+            width: 100%; padding: 10px; border-radius: 8px; 
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: white; outline: none;
+        }
+        .btn-primary { width: 100%; padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        
+        /* Color Grid */
+        .color-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        .color-opt { aspect-ratio: 1; border-radius: 8px; cursor: pointer; border: 2px solid transparent; }
+        .color-opt.selected { border-color: white; }
+
+        /* Todo Panel */
+        .todo-panel {
+            position: fixed; top: 0; right: 0; width: 300px; height: 100%;
+            background: #111; border-left: 1px solid rgba(255,255,255,0.1);
+            z-index: 900;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            display: flex; flex-direction: column;
+        }
+        .todo-panel.open { transform: translateX(0); }
+        .todo-header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .todo-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .todo-item { display: flex; align-items: center; padding: 10px; background: rgba(255,255,255,0.05); margin-bottom: 5px; border-radius: 8px; }
+        .todo-text { flex: 1; margin-left: 10px; font-size: 0.9rem; }
+        .todo-done .todo-text { text-decoration: line-through; opacity: 0.5; }
+        .todo-input-area { padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); }
     </style>
 </head>
-<body class="antialiased selection:bg-blue-500/40 relative overflow-hidden font-sans" oncontextmenu="return false;">
+<body>
 
-    <!-- Header -->
-    <header class="absolute top-0 left-0 w-full p-4 md:p-6 flex justify-between items-start z-30">
-        <div class="opacity-80 pt-2 pl-1">
-            <div id="miniDate" class="text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 opacity-0 transition-opacity duration-500">...</div>
+    <!-- Üst Kontroller -->
+    <header>
+        <div style="opacity: 0.8;">
+            <div id="miniDate" style="font-size: 0.7rem; font-weight: bold; opacity: 0.6; letter-spacing: 2px;">...</div>
         </div>
-        <div class="flex gap-3">
-            <button onclick="safeApp.toggleEditMode()" id="editModeBtn" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center hover:bg-white/10 active:scale-95 transition text-white/70">
-                <i class="ph ph-pencil-simple text-xl"></i>
-            </button>
-            <button onclick="safeApp.toggleTodo()" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center hover:bg-white/10 active:scale-95 transition relative">
-                <i class="ph ph-list-checks text-xl"></i>
-                <span id="todoBadge" class="absolute top-0 right-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-[#0f172a] hidden"></span>
-            </button>
-            <button onclick="safeApp.toggleSettings()" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center hover:bg-white/10 active:scale-95 transition">
-                <i class="ph ph-sliders text-xl"></i>
-            </button>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="app.toggleEdit()" class="glass-panel icon-btn" id="editBtn" style="color: rgba(255,255,255,0.7);"><i class="fa-solid fa-pen"></i></button>
+            <button onclick="app.toggleTodo()" class="glass-panel icon-btn"><i class="fa-solid fa-list-check"></i></button>
+            <button onclick="app.toggleSettings()" class="glass-panel icon-btn"><i class="fa-solid fa-gear"></i></button>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="h-screen overflow-y-auto overflow-x-hidden w-full relative z-10 custom-scroll pb-20">
-        <div class="min-h-full flex flex-col items-center justify-center px-4 w-full max-w-5xl mx-auto pt-20">
-            
-            <!-- Saat -->
-            <div class="text-center mb-8 animate-fade-in">
-                <h1 id="clock" class="text-7xl md:text-9xl font-bold tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 select-none font-mono">
-                    00:00
-                </h1>
-                <div class="mt-4 text-xl font-light text-white/80">
-                    <span id="greeting">Merhaba</span>, <span id="userNameDisplay" class="font-medium text-white border-b border-white/20">Misafir</span>
-                </div>
+    <main>
+        <!-- Saat ve Selamlama -->
+        <div class="clock-container">
+            <h1 id="clock">00:00</h1>
+            <div class="greeting">
+                <span id="greetText">Merhaba</span>, <span id="nameText" class="user-name">Kaptan</span>
             </div>
-
-            <!-- Arama -->
-            <div class="w-full max-w-lg relative mb-8 animate-fade-in">
-                <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-white/50">
-                    <i class="ph ph-magnifying-glass text-xl"></i>
-                </div>
-                <form onsubmit="event.preventDefault(); safeApp.search();" action=".">
-                    <input type="text" id="searchInput" class="w-full py-4 pl-12 pr-16 rounded-2xl glass-input text-lg placeholder-white/30" placeholder="Arama yap..." autocomplete="off">
-                </form>
-                <button onclick="safeApp.cycleEngine()" class="absolute inset-y-2 right-2 px-3 rounded-xl hover:bg-white/10 text-xs text-white/50 hover:text-white transition font-bold tracking-wide uppercase" id="engineName">GGL</button>
-            </div>
-
-            <!-- MODULAR WIDGET GRID -->
-            <div id="widgetGrid" class="widget-grid w-full max-w-4xl mb-8 animate-fade-in hidden">
-                <!-- JS Will Populate This -->
-            </div>
-            
-            <!-- Edit Mode Add Widget Bar -->
-            <div id="addWidgetBar" class="w-full max-w-4xl mb-8 hidden animate-fade-in">
-                <div class="flex gap-2 justify-center flex-wrap">
-                    <button onclick="safeApp.addWidget('weather')" class="px-4 py-2 glass-panel rounded-full text-xs font-bold hover:bg-white/20">+ Hava</button>
-                    <button onclick="safeApp.addWidget('crypto')" class="px-4 py-2 glass-panel rounded-full text-xs font-bold hover:bg-white/20">+ Kripto</button>
-                    <button onclick="safeApp.addWidget('pomodoro')" class="px-4 py-2 glass-panel rounded-full text-xs font-bold hover:bg-white/20">+ Odak</button>
-                    <button onclick="safeApp.addWidget('notes')" class="px-4 py-2 glass-panel rounded-full text-xs font-bold hover:bg-white/20">+ Not</button>
-                </div>
-            </div>
-
-            <!-- Linkler -->
-            <div id="linksGrid" class="grid grid-cols-4 md:grid-cols-6 gap-3 w-full max-w-2xl animate-fade-in"></div>
         </div>
+
+        <!-- Arama Çubuğu -->
+        <div class="search-container">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <form onsubmit="event.preventDefault(); app.search()">
+                <input type="text" id="searchInput" class="search-input" placeholder="Ara..." autocomplete="off">
+            </form>
+            <div id="engineBadge" class="engine-badge" onclick="app.cycleEngine()">GGL</div>
+        </div>
+
+        <!-- WIDGET GRID (JS ile doldurulur ama yapı CSS grid'dir) -->
+        <div id="widgetGrid" class="widget-grid hidden"></div>
+        
+        <!-- Add Widget Buttons (Edit Mode) -->
+        <div id="addWidgetBar" class="add-widget-bar hidden">
+            <button class="add-btn" onclick="app.addWidget('weather')">+ Hava</button>
+            <button class="add-btn" onclick="app.addWidget('crypto')">+ Kripto</button>
+            <button class="add-btn" onclick="app.addWidget('pomodoro')">+ Odak</button>
+            <button class="add-btn" onclick="app.addWidget('notes')">+ Not</button>
+        </div>
+
+        <!-- Linkler -->
+        <div id="linksGrid" class="links-grid"></div>
     </main>
 
-    <!-- WIDGET SETTINGS MODAL -->
-    <div id="widgetSettingsModal" class="fixed inset-0 z-[60] flex items-center justify-center modal-enter transition-all-300">
-        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="safeApp.closeWidgetSettings()"></div>
-        <div class="relative w-80 glass-panel rounded-3xl p-6 transform transition-all-300 z-10">
-            <h3 class="text-xs font-bold uppercase tracking-widest text-white/50 mb-4">Widget Ayarı</h3>
-            <div id="widgetSettingsContent" class="space-y-4">
-                <!-- Dynamic Content -->
+    <!-- SETTINGS MODAL -->
+    <div id="settingsModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Ayarlar</div>
+                <button onclick="app.toggleSettings()" class="icon-btn" style="width:30px;height:30px;"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="mt-4 flex justify-end">
-                <button onclick="safeApp.saveWidgetSettings()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-xs font-bold">Kaydet</button>
+            
+            <div class="form-group">
+                <label class="form-label">İsim</label>
+                <input id="nameInput" oninput="app.updateName(this.value)" class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Tema</label>
+                <div class="color-grid" id="themeGrid"></div>
+            </div>
+
+            <div class="form-group" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                <label class="form-label">Yeni Kısayol</label>
+                <input id="linkTitle" placeholder="Başlık" class="form-input" style="margin-bottom: 5px;">
+                <input id="linkUrl" placeholder="URL" class="form-input" style="margin-bottom: 5px;">
+                <button onclick="app.addLink()" class="btn-primary">Ekle</button>
+            </div>
+            
+            <div style="text-align: center; margin-top: 10px;">
+                <button onclick="app.reset()" style="background:none; border:none; color:#ef4444; font-size:0.7rem; cursor:pointer;">Sıfırla</button>
             </div>
         </div>
     </div>
 
-    <!-- MAIN SETTINGS MODAL -->
-    <div id="settingsModal" class="fixed inset-0 z-50 flex items-center justify-center modal-enter transition-all-300">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="safeApp.toggleSettings()"></div>
-        <div class="relative w-80 glass-panel rounded-3xl p-6 transform transition-all-300 z-10 max-h-[80vh] overflow-y-auto custom-scroll">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xs font-bold uppercase tracking-widest text-white/50">Genel Ayarlar</h3>
-                <button onclick="safeApp.toggleSettings()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10"><i class="ph ph-x text-lg"></i></button>
+    <!-- WIDGET SETTINGS MODAL -->
+    <div id="widgetModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Widget Düzenle</div>
+                <button onclick="app.closeWidgetSettings()" class="icon-btn" style="width:30px;height:30px;"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="space-y-6">
-                <div class="space-y-2">
-                    <label class="text-xs text-white/60 font-bold uppercase">Kimlik</label>
-                    <input type="text" id="nameInput" oninput="safeApp.updateName(this.value)" class="w-full p-2 rounded-lg glass-input text-sm">
-                </div>
-                <div class="space-y-2">
-                    <label class="text-xs text-white/60 font-bold uppercase">Tema</label>
-                    <div class="grid grid-cols-5 gap-2" id="colorOptions"></div>
-                </div>
-                <div class="space-y-2 pt-2 border-t border-white/10">
-                    <label class="text-xs text-white/60 font-bold uppercase">Yeni Kısayol</label>
-                    <div class="flex flex-col gap-2">
-                        <input id="linkTitle" placeholder="Başlık" class="w-full p-2 rounded-lg glass-input text-xs">
-                        <input id="linkUrl" placeholder="URL" class="w-full p-2 rounded-lg glass-input text-xs">
-                        <button onclick="safeApp.addLink()" class="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-bold transition">Ekle</button>
-                    </div>
-                </div>
-                <div class="pt-2 text-center">
-                     <button onclick="safeApp.reset()" class="text-[10px] text-red-400 opacity-60 hover:opacity-100 transition">Fabrika Ayarlarına Dön</button>
-                </div>
-            </div>
+            <div id="widgetSettingsForm"></div>
+            <button onclick="app.saveWidgetSettings()" class="btn-primary">Kaydet</button>
         </div>
     </div>
 
     <!-- TODO PANEL -->
-    <div id="todoOverlay" onclick="safeApp.toggleTodo()" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden transition-opacity duration-300"></div>
-    <div id="todoPanel" class="fixed inset-y-0 right-0 w-80 glass-panel z-50 transform translate-x-full transition-transform duration-300 shadow-2xl flex flex-col border-l border-white/10">
-        <div class="p-5 border-b border-white/10 flex justify-between items-center bg-black/20">
-            <h3 class="font-bold text-sm uppercase tracking-widest text-white/70">Görevler</h3>
-            <button onclick="safeApp.toggleTodo()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10"><i class="ph ph-x text-lg"></i></button>
+    <div id="todoPanel" class="todo-panel">
+        <div class="todo-header">
+            <div class="modal-title">GÖREVLER</div>
+            <button onclick="app.toggleTodo()" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div id="todoList" class="flex-1 overflow-y-auto p-4 space-y-2 custom-scroll"></div>
-        <div class="p-4 bg-black/20 border-t border-white/10 relative">
-            <input id="todoInput" onkeydown="if(event.key==='Enter') safeApp.addTodo()" type="text" placeholder="Görev ekle..." class="w-full pl-4 pr-10 py-3 rounded-xl glass-input text-sm">
-            <button onclick="safeApp.addTodo()" class="absolute right-6 top-1/2 -translate-y-1/2 text-blue-400 hover:text-white"><i class="ph ph-plus-circle text-xl"></i></button>
+        <div id="todoList" class="todo-list"></div>
+        <div class="todo-input-area">
+            <input id="todoInput" class="form-input" placeholder="Görev ekle + Enter" onkeydown="if(event.key==='Enter') app.addTodo()">
         </div>
     </div>
 
     <script>
-        const safeApp = (function() {
-            // --- STORAGE & DATA ---
+        const app = (function() {
+            // VERİ YÖNETİMİ
             const storage = {
                 get: (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
                 set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
                 clear: (k) => { try { localStorage.removeItem(k); } catch {} }
             };
 
-            let data = storage.get('hp_v9') || {
+            let data = storage.get('hp_v10') || {
                 name: 'Kaptan',
-                theme: 'cyber',
+                theme: 'midnight',
                 engineIdx: 0,
-                // Modüler Widget Array'i: ID, Tip, Span (Boyut), ve Ayarlar
                 widgets: [
                     { id: 'w1', type: 'weather', span: 1, settings: { city: 'Istanbul' } },
                     { id: 'w2', type: 'crypto', span: 1, settings: { symbol: 'BTCUSDT', name: 'Bitcoin' } },
@@ -247,126 +398,106 @@
                     { id: 'w4', type: 'notes', span: 1, settings: { content: '' } }
                 ],
                 links: [
-                    { t: 'YouTube', u: 'https://youtube.com', i: 'ph-youtube-logo' },
-                    { t: 'Google', u: 'https://google.com', i: 'ph-google-logo' }
+                    { t: 'YouTube', u: 'https://youtube.com', i: 'fa-youtube' },
+                    { t: 'Google', u: 'https://google.com', i: 'fa-google' }
                 ],
                 todos: []
             };
 
             let isEditMode = false;
-            let currentEditWidgetId = null;
-            let pomodoroInterval = null;
+            let currentWid = null;
+            let pomoInt = null;
 
             const themes = {
                 midnight: 'linear-gradient(to bottom right, #0f172a, #000000)',
-                sunset: 'linear-gradient(to bottom right, #831843, #1e1b4b)',
                 ocean: 'linear-gradient(to bottom right, #1e3a8a, #0f172a)',
+                forest: 'linear-gradient(to bottom right, #064e3b, #022c22)',
                 cyber: 'linear-gradient(to bottom right, #111827, #000000)',
-                gold: 'linear-gradient(to bottom right, #713f12, #000000)'
+                sunset: 'linear-gradient(to bottom right, #881337, #1e1b4b)'
             };
 
             const engines = [
-                { n: 'GGL', u: 'https://google.com/search?q=', i: 'ph-google-logo' },
-                { n: 'YT', u: 'https://youtube.com/results?search_query=', i: 'ph-youtube-logo' }
+                { n: 'GGL', u: 'https://google.com/search?q=' },
+                { n: 'YT', u: 'https://youtube.com/results?search_query=' }
             ];
 
-            const macros = {
-                '#yt': { u: 'https://youtube.com/results?search_query=' },
-                '#g': { u: 'https://google.com/search?q=' }
-            };
-
+            // DOM
             const el = (id) => document.getElementById(id);
 
-            // --- INIT ---
             function init() {
-                document.addEventListener('contextmenu', event => event.preventDefault());
                 applyTheme();
                 renderAll();
                 startClock();
-                if(el('miniDate')) el('miniDate').classList.remove('opacity-0');
-                // Widgetları başlat (Veri çek)
                 refreshWidgets();
             }
 
-            function save() { storage.set('hp_v9', data); }
+            function save() { storage.set('hp_v10', data); }
 
             function applyTheme() {
-                document.body.style.background = themes[data.theme] || themes.midnight;
-                if(data.theme === 'cyber') document.body.style.setProperty('--accent', '#00ff9d');
+                document.body.style.background = themes[data.theme];
                 renderThemes();
             }
 
             function startClock() {
                 const tick = () => {
                     const now = new Date();
-                    if(el('clock')) el('clock').innerText = now.toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
-                    if(el('miniDate')) el('miniDate').innerText = now.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric', month:'long'});
+                    el('clock').innerText = now.toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
+                    el('miniDate').innerText = now.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric', month:'long'});
                     const h = now.getHours();
-                    const greet = h<6 ? 'İyi Geceler' : h<12 ? 'Günaydın' : h<18 ? 'Tünaydın' : 'İyi Akşamlar';
-                    if(el('greeting')) el('greeting').innerText = greet;
+                    el('greetText').innerText = h<6?'İyi Geceler':h<12?'Günaydın':h<18?'Tünaydın':'İyi Akşamlar';
                 };
-                tick();
-                setInterval(tick, 1000);
+                tick(); setInterval(tick, 1000);
             }
 
-            // --- WIDGET RENDER LOGIC ---
+            // RENDER FONKSİYONLARI
+            function renderAll() {
+                el('nameText').innerText = data.name;
+                el('nameInput').value = data.name;
+                renderWidgets();
+                renderLinks();
+                renderTodos();
+                el('engineBadge').innerText = engines[data.engineIdx].n;
+            }
+
             function renderWidgets() {
                 const grid = el('widgetGrid');
-                if(!grid) return;
-                
-                if(data.widgets.length === 0 && !isEditMode) {
-                    grid.classList.add('hidden');
-                    return;
-                }
+                if(data.widgets.length === 0 && !isEditMode) { grid.classList.add('hidden'); return; }
                 grid.classList.remove('hidden');
-                
+
                 grid.innerHTML = data.widgets.map(w => {
-                    const spanClass = w.span === 2 ? 'col-span-2' : 'col-span-1';
                     let content = '';
-                    
-                    // Widget Tipine Göre İçerik
                     if(w.type === 'weather') {
                         content = `
-                            <div class="flex justify-between items-start">
-                                <i class="ph ph-cloud-sun text-2xl text-yellow-200"></i>
-                                <span class="text-[10px] uppercase opacity-50 font-bold">${w.settings.city || 'Şehir'}</span>
-                            </div>
-                            <div id="val-${w.id}" class="text-xl font-bold mt-2">--°C</div>
+                            <div class="widget-header"><i class="fa-solid fa-cloud-sun widget-icon" style="color:#fde047"></i><span class="widget-title">${w.settings.city}</span></div>
+                            <div id="v-${w.id}" class="widget-value">--°C</div>
                         `;
                     } else if(w.type === 'crypto') {
                         content = `
-                            <div class="flex justify-between items-start">
-                                <i class="ph ph-currency-btc text-2xl text-orange-400"></i>
-                                <span class="text-[10px] uppercase opacity-50 font-bold">${w.settings.name || 'Crypto'}</span>
-                            </div>
-                            <div id="val-${w.id}" class="text-xl font-bold mt-2 font-mono">...</div>
+                            <div class="widget-header"><i class="fa-brands fa-bitcoin widget-icon" style="color:#fb923c"></i><span class="widget-title">${w.settings.name}</span></div>
+                            <div id="v-${w.id}" class="widget-value">...</div>
                         `;
                     } else if(w.type === 'pomodoro') {
                         content = `
-                            <div class="flex flex-col items-center justify-center h-full relative">
-                                <div id="val-${w.id}" class="text-2xl font-mono font-bold">25:00</div>
-                                <button onclick="safeApp.togglePomodoro('${w.id}')" id="btn-${w.id}" class="mt-2 hover:scale-110 transition"><i class="ph ph-play-circle text-2xl"></i></button>
-                                <span class="absolute top-0 right-0 text-[10px] uppercase opacity-30 font-bold">Focus</span>
+                            <div style="text-align:center;">
+                                <div id="v-${w.id}" style="font-size:1.8rem; font-weight:700; font-family:monospace;">25:00</div>
+                                <button onclick="app.pomoToggle('${w.id}')" id="b-${w.id}" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer; margin-top:5px;"><i class="fa-regular fa-circle-play"></i></button>
                             </div>
                         `;
                     } else if(w.type === 'notes') {
                         content = `
-                            <div class="relative h-full w-full p-0 overflow-hidden">
-                                <textarea oninput="safeApp.saveWidgetNote('${w.id}', this.value)" class="w-full h-full bg-transparent resize-none focus:outline-none text-xs custom-scroll text-white/80 placeholder-white/20" placeholder="Not...">${w.settings.content || ''}</textarea>
-                            </div>
+                            <textarea oninput="app.saveNote('${w.id}', this.value)" style="width:100%; height:100%; background:transparent; border:none; color:white; resize:none; outline:none; font-size:0.8rem;" placeholder="Not...">${w.settings.content || ''}</textarea>
                         `;
                     }
 
-                    // Kontrol Butonları (Sadece Edit Modunda Görünür)
                     const controls = `
                         <div class="widget-controls">
-                            <button onclick="safeApp.resizeWidget('${w.id}')" class="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-500 text-xs shadow-lg"><i class="ph ph-arrows-out-line"></i></button>
-                            <button onclick="safeApp.openWidgetSettings('${w.id}')" class="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center hover:bg-gray-500 text-xs shadow-lg"><i class="ph ph-gear"></i></button>
-                            <button onclick="safeApp.removeWidget('${w.id}')" class="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-500 text-xs shadow-lg"><i class="ph ph-x"></i></button>
+                            <button class="ctrl-btn btn-resize" onclick="app.wResize('${w.id}')"><i class="fa-solid fa-expand"></i></button>
+                            <button class="ctrl-btn btn-settings" onclick="app.wEdit('${w.id}')"><i class="fa-solid fa-gear"></i></button>
+                            <button class="ctrl-btn btn-delete" onclick="app.wDel('${w.id}')"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     `;
 
-                    return `<div class="widget-card ${spanClass}" id="widget-${w.id}">${controls}${content}</div>`;
+                    return `<div class="glass-panel widget-card ${w.span===2?'col-span-2':''}" style="position:relative;">${controls}${content}</div>`;
                 }).join('');
             }
 
@@ -377,315 +508,151 @@
                 });
             }
 
-            // --- WIDGET DATA FETCHING ---
+            // API CALLS
             async function fetchWeather(w) {
-                const elVal = el(`val-${w.id}`);
-                if(!elVal) return;
+                const elV = el(`v-${w.id}`);
+                if(!elV) return;
                 try {
-                    // Basit geocoding: Şehir isminden koordinat bul
-                    const city = w.settings.city || 'Istanbul';
-                    const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&language=tr&format=json`);
-                    const geoJson = await geoRes.json();
-                    
-                    if(!geoJson.results) { elVal.innerText = "?"; return; }
-                    
-                    const { latitude, longitude } = geoJson.results[0];
-                    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m&timezone=auto`);
-                    const json = await res.json();
-                    elVal.innerText = `${Math.round(json.current.temperature_2m)}°C`;
-                } catch { elVal.innerText = "Hata"; }
+                    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=41.0082&longitude=28.9784&current=temperature_2m`); // Sabit Istanbul fallback
+                    const j = await res.json();
+                    elV.innerText = `${Math.round(j.current.temperature_2m)}°C`;
+                } catch { elV.innerText = "?"; }
             }
 
             async function fetchCrypto(w) {
-                const elVal = el(`val-${w.id}`);
-                if(!elVal) return;
+                const elV = el(`v-${w.id}`);
+                if(!elV) return;
                 try {
-                    const symbol = w.settings.symbol || 'BTCUSDT';
-                    const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol.toUpperCase()}`);
-                    const json = await res.json();
-                    const price = parseFloat(json.price);
-                    // Format nice
-                    const formatted = price > 1 ? price.toLocaleString('en-US', {maximumFractionDigits: 2}) : price.toFixed(4);
-                    elVal.innerText = `$${formatted}`;
-                } catch { elVal.innerText = "Hata"; }
+                    const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${w.settings.symbol}`);
+                    const j = await res.json();
+                    elV.innerText = `$${parseFloat(j.price).toFixed(2)}`;
+                } catch { elV.innerText = "?"; }
             }
 
-            function togglePomodoro(id) {
-                const btn = el(`btn-${id}`);
-                const timeEl = el(`val-${id}`);
-                
-                if (pomodoroInterval) {
-                    clearInterval(pomodoroInterval);
-                    pomodoroInterval = null;
-                    btn.innerHTML = '<i class="ph ph-play-circle text-2xl"></i>';
-                    timeEl.classList.remove('text-blue-400');
-                } else {
-                    let seconds = 25 * 60;
-                    btn.innerHTML = '<i class="ph ph-pause-circle text-2xl text-red-400"></i>';
-                    timeEl.classList.add('text-blue-400');
-                    pomodoroInterval = setInterval(() => {
-                        seconds--;
-                        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-                        const s = (seconds % 60).toString().padStart(2, '0');
-                        timeEl.innerText = `${m}:${s}`;
-                        if (seconds <= 0) {
-                            clearInterval(pomodoroInterval);
-                            pomodoroInterval = null;
-                            timeEl.innerText = "25:00";
-                            alert("Süre doldu!");
-                            btn.innerHTML = '<i class="ph ph-play-circle text-2xl"></i>';
-                        }
-                    }, 1000);
-                }
-            }
-
-            function saveWidgetNote(id, val) {
-                const w = data.widgets.find(x => x.id === id);
-                if(w) { w.settings.content = val; save(); }
-            }
-
-            // --- EDIT MODE & MANAGEMENT ---
-            function toggleEditMode() {
-                isEditMode = !isEditMode;
-                const grid = el('widgetGrid');
-                const bar = el('addWidgetBar');
-                const btn = el('editModeBtn');
-                
-                if(isEditMode) {
-                    grid.classList.add('edit-mode');
-                    bar.classList.remove('hidden');
-                    btn.classList.add('text-blue-400', 'bg-white/10');
-                    grid.classList.remove('hidden'); // Force show grid in edit mode
-                } else {
-                    grid.classList.remove('edit-mode');
-                    bar.classList.add('hidden');
-                    btn.classList.remove('text-blue-400', 'bg-white/10');
-                    if(data.widgets.length === 0) grid.classList.add('hidden');
-                }
-                renderWidgets(); // Re-render to show/hide controls
-                if(!isEditMode) refreshWidgets(); // Restore data display
-            }
-
-            function addWidget(type) {
-                const id = 'w' + Date.now();
-                const defaults = {
-                    weather: { city: 'Istanbul' },
-                    crypto: { symbol: 'BTCUSDT', name: 'Bitcoin' },
-                    pomodoro: {},
-                    notes: { content: '' }
-                };
-                data.widgets.push({ id, type, span: 1, settings: defaults[type] });
-                save();
-                renderWidgets();
-                if(!isEditMode) refreshWidgets(); // If added programmatically
-            }
-
-            function removeWidget(id) {
-                if(confirm('Widget silinsin mi?')) {
-                    data.widgets = data.widgets.filter(w => w.id !== id);
-                    save();
-                    renderWidgets();
-                }
-            }
-
-            function resizeWidget(id) {
-                const w = data.widgets.find(x => x.id === id);
-                if(w) {
-                    w.span = w.span === 1 ? 2 : 1;
-                    save();
-                    renderWidgets();
-                }
-            }
-
-            // --- WIDGET SPECIFIC SETTINGS ---
-            function openWidgetSettings(id) {
-                currentEditWidgetId = id;
-                const w = data.widgets.find(x => x.id === id);
-                const modal = el('widgetSettingsModal');
-                const content = el('widgetSettingsContent');
-                
-                let html = '';
-                if(w.type === 'weather') {
-                    html = `
-                        <label class="text-xs opacity-70 block mb-1">Şehir Adı</label>
-                        <input id="ws-city" value="${w.settings.city || ''}" class="w-full p-2 glass-input rounded-lg text-sm">
-                        <p class="text-[10px] opacity-50 mt-1">Örn: Ankara, London, New York</p>
-                    `;
-                } else if(w.type === 'crypto') {
-                    html = `
-                        <label class="text-xs opacity-70 block mb-1">Coin Sembolü (Binance)</label>
-                        <input id="ws-symbol" value="${w.settings.symbol || ''}" class="w-full p-2 glass-input rounded-lg text-sm mb-2">
-                        <label class="text-xs opacity-70 block mb-1">Görünen İsim</label>
-                        <input id="ws-name" value="${w.settings.name || ''}" class="w-full p-2 glass-input rounded-lg text-sm">
-                    `;
-                } else {
-                    html = '<p class="text-sm opacity-50">Bu widget için özel ayar yok.</p>';
-                }
-                
-                content.innerHTML = html;
-                modal.classList.add('modal-active');
-            }
-
-            function closeWidgetSettings() {
-                el('widgetSettingsModal').classList.remove('modal-active');
-                currentEditWidgetId = null;
-            }
-
-            function saveWidgetSettings() {
-                if(!currentEditWidgetId) return;
-                const w = data.widgets.find(x => x.id === currentEditWidgetId);
-                
-                if(w.type === 'weather') {
-                    const val = el('ws-city').value;
-                    if(val) w.settings.city = val;
-                } else if(w.type === 'crypto') {
-                    const sym = el('ws-symbol').value;
-                    const nm = el('ws-name').value;
-                    if(sym) w.settings.symbol = sym.toUpperCase();
-                    if(nm) w.settings.name = nm;
-                }
-                
-                save();
-                renderWidgets();
-                refreshWidgets(); // Update data immediately
-                closeWidgetSettings();
-            }
-
-            // --- STANDARD UI FUNCTIONS ---
-            function renderAll() {
-                if(el('userNameDisplay')) el('userNameDisplay').innerText = data.name;
-                if(el('nameInput')) el('nameInput').value = data.name;
-                renderLinks();
-                renderTodos();
-                renderWidgets();
-                renderThemes();
-                updateEngineUI();
-            }
-
-            function renderLinks() {
-                const grid = el('linksGrid');
-                if(!grid) return;
-                grid.innerHTML = data.links.map((l, i) => `
-                    <a href="${l.u}" class="flex flex-col items-center justify-center p-3 rounded-xl glass-panel hover:bg-white/10 active:scale-95 transition relative group text-white no-underline">
-                        <i class="ph ${l.i} text-2xl mb-1 opacity-80"></i>
-                        <span class="text-[10px] font-medium opacity-60">${l.t}</span>
-                        <button onclick="event.preventDefault(); safeApp.deleteLink(${i})" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="ph ph-minus text-white text-[10px]"></i></button>
-                    </a>
-                `).join('') + `
-                    <button onclick="safeApp.toggleSettings()" class="flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-white/20 hover:bg-white/5 opacity-50 hover:opacity-100">
-                        <i class="ph ph-plus text-xl"></i>
-                    </button>
-                `;
-            }
-
-            function renderTodos() {
-                const list = el('todoList');
-                if(!list) return;
-                const active = data.todos.filter(t => !t.done).length;
-                el('todoBadge').classList.toggle('hidden', active === 0);
-                list.innerHTML = data.todos.length ? data.todos.map((t, i) => `
-                    <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 mb-2 group">
-                        <div onclick="safeApp.toggleTodoItem(${i})" class="flex items-center gap-3 flex-1 cursor-pointer">
-                            <div class="w-4 h-4 rounded border flex items-center justify-center ${t.done ? 'bg-blue-500 border-blue-500' : 'border-white/30'}">
-                                ${t.done ? '<i class="ph ph-check text-[10px]"></i>' : ''}
-                            </div>
-                            <span class="text-sm ${t.done ? 'line-through text-white/30' : 'text-white/90'}">${t.text}</span>
-                        </div>
-                        <button onclick="safeApp.deleteTodo(${i})" class="text-white/30 hover:text-red-400"><i class="ph ph-trash"></i></button>
-                    </div>
-                `).join('') : '<div class="text-center text-white/20 text-xs mt-10">Liste boş</div>';
-            }
-
-            function renderThemes() {
-                const container = el('colorOptions');
-                if(!container) return;
-                container.innerHTML = Object.keys(themes).map(key => `
-                    <div onclick="safeApp.setTheme('${key}')" class="w-full aspect-square rounded-lg border-2 cursor-pointer ${data.theme === key ? 'border-white' : 'border-transparent'}" style="background:${themes[key]}"></div>
-                `).join('');
-            }
-
-            function updateEngineUI() {
-                const eng = engines[data.engineIdx];
-                if(el('engineName')) el('engineName').innerText = eng.n;
-            }
-
-            // --- ACTIONS ---
+            // UI ACTIONS
             return {
                 init,
-                toggleEditMode,
-                addWidget,
-                removeWidget,
-                resizeWidget,
-                openWidgetSettings,
-                closeWidgetSettings,
-                saveWidgetSettings,
-                togglePomodoro,
-                saveWidgetNote,
-
-                updateName: (val) => { data.name = val; el('userNameDisplay').innerText = val; save(); },
-                setTheme: (key) => { data.theme = key; applyTheme(); save(); },
-                cycleEngine: () => { data.engineIdx = (data.engineIdx + 1) % engines.length; save(); updateEngineUI(); },
-                search: () => {
-                    let q = el('searchInput').value.trim();
-                    if(!q) return;
-                    let targetUrl = engines[data.engineIdx].u;
-                    for (const [key, macro] of Object.entries(macros)) {
-                        if (q.endsWith(key)) {
-                            targetUrl = macro.u;
-                            q = q.slice(0, -key.length).trim();
-                            break;
-                        }
-                    }
-                    window.location.href = targetUrl + encodeURIComponent(q);
+                updateName: (v) => { data.name = v; el('nameText').innerText = v; save(); },
+                setTheme: (t) => { data.theme = t; applyTheme(); save(); },
+                
+                toggleEdit: () => {
+                    isEditMode = !isEditMode;
+                    document.body.classList.toggle('edit-mode', isEditMode);
+                    el('addWidgetBar').classList.toggle('hidden', !isEditMode);
+                    el('editBtn').style.background = isEditMode ? 'rgba(255,255,255,0.2)' : '';
+                    renderWidgets();
+                    if(!isEditMode) refreshWidgets();
                 },
+
+                addWidget: (type) => {
+                    const defs = {
+                        weather: { city: 'Istanbul' },
+                        crypto: { symbol: 'BTCUSDT', name: 'BTC' },
+                        pomodoro: {},
+                        notes: { content: '' }
+                    };
+                    data.widgets.push({ id: 'w'+Date.now(), type, span: 1, settings: defs[type] });
+                    save(); renderWidgets();
+                },
+                wDel: (id) => { if(confirm('Sil?')) { data.widgets = data.widgets.filter(x=>x.id!==id); save(); renderWidgets(); } },
+                wResize: (id) => { const w=data.widgets.find(x=>x.id===id); w.span=w.span===1?2:1; save(); renderWidgets(); },
+                
+                wEdit: (id) => {
+                    currentWid = id;
+                    const w = data.widgets.find(x=>x.id===id);
+                    const f = el('widgetSettingsForm');
+                    if(w.type === 'weather') {
+                        f.innerHTML = `<label class="form-label">Şehir</label><input id="ws-1" value="${w.settings.city}" class="form-input">`;
+                    } else if(w.type === 'crypto') {
+                        f.innerHTML = `<label class="form-label">Sembol (BTCUSDT)</label><input id="ws-1" value="${w.settings.symbol}" class="form-input"><label class="form-label">İsim</label><input id="ws-2" value="${w.settings.name}" class="form-input">`;
+                    } else { f.innerHTML = '<p>Ayar yok.</p>'; }
+                    el('widgetModal').classList.add('active');
+                },
+                saveWidgetSettings: () => {
+                    const w = data.widgets.find(x=>x.id===currentWid);
+                    if(w.type === 'weather') w.settings.city = el('ws-1').value;
+                    if(w.type === 'crypto') { w.settings.symbol = el('ws-1').value; w.settings.name = el('ws-2').value; }
+                    save(); refreshWidgets(); el('widgetModal').classList.remove('active');
+                },
+                closeWidgetSettings: () => el('widgetModal').classList.remove('active'),
+
+                saveNote: (id, v) => { data.widgets.find(x=>x.id===id).settings.content = v; save(); },
+
+                pomoToggle: (id) => {
+                    const b = el(`b-${id}`);
+                    const v = el(`v-${id}`);
+                    if(pomoInt) { clearInterval(pomoInt); pomoInt=null; b.innerHTML='<i class="fa-regular fa-circle-play"></i>'; v.innerText='25:00'; }
+                    else {
+                        let s = 1500;
+                        b.innerHTML='<i class="fa-regular fa-circle-stop"></i>';
+                        pomoInt = setInterval(()=>{
+                            s--;
+                            v.innerText = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+                            if(s<=0) { clearInterval(pomoInt); alert('Bitti!'); }
+                        },1000);
+                    }
+                },
+
+                // LINK & TODO
                 addLink: () => {
                     const t = el('linkTitle').value;
                     let u = el('linkUrl').value;
-                    if(t && u) {
-                        if(!u.startsWith('http')) u = 'https://' + u;
-                        data.links.push({t, u, i: 'ph-globe'});
+                    if(u) {
+                        if(!u.startsWith('http')) u = 'https://'+u;
+                        data.links.push({t, u, i: 'fa-globe'});
                         save(); renderLinks();
-                        el('linkTitle').value = ''; el('linkUrl').value = '';
+                        el('linkTitle').value=''; el('linkUrl').value='';
                     }
                 },
-                deleteLink: (i) => { if(confirm('Sil?')) { data.links.splice(i, 1); save(); renderLinks(); } },
+                delLink: (i) => { if(confirm('Sil?')) { data.links.splice(i,1); save(); renderLinks(); } },
+                
                 addTodo: () => {
-                    const t = el('todoInput').value.trim();
-                    if(t) { data.todos.push({text:t, done:false}); save(); renderTodos(); el('todoInput').value=''; }
+                    const v = el('todoInput').value;
+                    if(v) { data.todos.push({t:v, d:false}); save(); renderTodos(); el('todoInput').value=''; }
                 },
-                toggleTodoItem: (i) => { data.todos[i].done = !data.todos[i].done; save(); renderTodos(); },
-                deleteTodo: (i) => { data.todos.splice(i, 1); save(); renderTodos(); },
-                toggleSettings: () => {
-                    const m = el('settingsModal');
-                    const isActive = m.classList.contains('modal-active');
-                    if(isActive) m.classList.remove('modal-active');
-                    else { 
-                        const p = el('todoPanel');
-                        if (p.classList.contains('translate-x-0')) safeApp.toggleTodo();
-                        m.classList.add('modal-active'); 
-                    }
-                },
-                toggleTodo: () => {
-                    const p = el('todoPanel');
-                    const o = el('todoOverlay');
-                    const isOpen = p.classList.contains('translate-x-0');
-                    if (isOpen) {
-                        p.classList.remove('translate-x-0');
-                        p.classList.add('translate-x-full');
-                        o.classList.add('hidden');
-                    } else {
-                        const m = el('settingsModal');
-                        if (m.classList.contains('modal-active')) m.classList.remove('modal-active');
-                        p.classList.remove('translate-x-full');
-                        p.classList.add('translate-x-0');
-                        o.classList.remove('hidden');
-                    }
-                },
-                reset: () => { if(confirm('Sıfırla?')) { storage.clear('hp_v9'); location.reload(); } }
+                toggleTodoItem: (i) => { data.todos[i].d = !data.todos[i].d; save(); renderTodos(); },
+                delTodo: (i) => { data.todos.splice(i,1); save(); renderTodos(); },
+
+                toggleSettings: () => el('settingsModal').classList.toggle('active'),
+                toggleTodo: () => el('todoPanel').classList.toggle('open'),
+                
+                cycleEngine: () => { data.engineIdx = (data.engineIdx+1)%engines.length; save(); renderAll(); },
+                search: () => window.location.href = engines[data.engineIdx].u + encodeURIComponent(el('searchInput').value),
+                reset: () => { if(confirm('Sıfırla?')) { storage.clear('hp_v10'); location.reload(); } }
             };
+
+            function renderLinks() {
+                el('linksGrid').innerHTML = data.links.map((l,i) => `
+                    <div class="glass-panel link-card">
+                        <button class="link-delete" onclick="app.delLink(${i})"><i class="fa-solid fa-xmark"></i></button>
+                        <a href="${l.u}" style="text-decoration:none; color:white; width:100%; height:100%; display:flex; flex-direction:column; align-items:center;">
+                            <i class="fa-solid ${l.i||'fa-globe'} link-icon"></i>
+                            <span class="link-title">${l.t}</span>
+                        </a>
+                    </div>
+                `).join('');
+            }
+
+            function renderTodos() {
+                el('todoList').innerHTML = data.todos.map((t,i) => `
+                    <div class="todo-item ${t.d?'todo-done':''}">
+                        <input type="checkbox" ${t.d?'checked':''} onclick="app.toggleTodoItem(${i})">
+                        <span class="todo-text">${t.t}</span>
+                        <button onclick="app.delTodo(${i})" style="background:none; border:none; color:#ef4444; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `).join('');
+            }
+            
+            function renderThemes() {
+                el('themeGrid').innerHTML = Object.keys(themes).map(k => 
+                    `<div class="color-opt ${data.theme===k?'selected':''}" style="background:${themes[k]}" onclick="app.setTheme('${k}')"></div>`
+                ).join('');
+            }
+
+            return { init, ...app };
         })();
 
-        window.addEventListener('DOMContentLoaded', safeApp.init);
+        document.addEventListener('DOMContentLoaded', app.init);
     </script>
 </body>
 </html>

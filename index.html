@@ -7,15 +7,11 @@
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
     
-    <!-- 1. Önce Fontlar -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- 2. İkonlar (Hata verirse çalışmayı durdurmasın diye async) -->
     <script src="https://unpkg.com/@phosphor-icons/web" async></script>
 
-    <!-- 3. Tailwind Config (Scriptten ÖNCE olmalı) -->
     <script>
         window.tailwind = {
             darkMode: 'class',
@@ -43,7 +39,7 @@
             min-height: 100vh;
             color: white;
             overscroll-behavior-y: none;
-            -webkit-tap-highlight-color: transparent; /* Mobil tıklama rengini kapat */
+            -webkit-tap-highlight-color: transparent;
         }
         .glass-panel {
             background: rgba(255, 255, 255, 0.08);
@@ -64,7 +60,6 @@
         }
         .hidden { display: none !important; }
         
-        /* Modal Geçişleri */
         .modal-enter { opacity: 0; transform: scale(0.95); pointer-events: none; }
         .modal-active { opacity: 1; transform: scale(1); pointer-events: auto; }
         .transition-all-300 { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -75,7 +70,6 @@
     <!-- Header -->
     <header class="absolute top-0 left-0 w-full p-4 md:p-6 flex justify-between items-start z-30">
         <div class="opacity-80">
-            <!-- Varsayılan metni kaldırdım, JS çalışmazsa boş kalsın -->
             <div id="miniDate" class="text-[10px] font-bold tracking-[0.2em] uppercase text-blue-200 opacity-0 transition-opacity duration-500">...</div>
             <div class="text-sm font-medium mt-0.5">Kontrol Merkezi</div>
         </div>
@@ -114,7 +108,7 @@
                     type="text" 
                     id="searchInput"
                     class="w-full py-4 pl-12 pr-16 rounded-2xl glass-input text-lg placeholder-white/30"
-                    placeholder="Google'da ara..."
+                    placeholder="Google'da ara... (#yt, #gh)"
                     autocomplete="off"
                 >
             </form>
@@ -128,29 +122,23 @@
 
     </main>
 
-    <!-- AYARLAR MODAL (Dialog Etiketi Kullanılmadı) -->
+    <!-- AYARLAR MODAL -->
     <div id="settingsModal" class="fixed inset-0 z-50 flex items-center justify-center modal-enter transition-all-300">
-        <!-- Backdrop -->
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="safeApp.toggleSettings()"></div>
-        
-        <!-- Content -->
         <div class="relative w-80 glass-panel rounded-3xl p-6 transform transition-all-300 z-10">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xs font-bold uppercase tracking-widest text-white/50">Ayarlar</h3>
                 <button onclick="safeApp.toggleSettings()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10"><i class="ph ph-x text-lg"></i></button>
             </div>
-
             <div class="space-y-4">
                 <div>
                     <label class="text-xs text-white/60 block mb-1">İsim</label>
                     <input type="text" id="nameInput" oninput="safeApp.updateName(this.value)" class="w-full p-2 rounded-lg glass-input text-sm">
                 </div>
-
                 <div>
                     <label class="text-xs text-white/60 block mb-2">Tema</label>
                     <div class="grid grid-cols-5 gap-2" id="colorOptions"></div>
                 </div>
-
                 <div class="pt-4 border-t border-white/10">
                     <label class="text-xs text-white/60 block mb-2">Kısayol Ekle</label>
                     <div class="space-y-2">
@@ -163,7 +151,8 @@
         </div>
     </div>
 
-    <!-- TODO PANEL (Dialog Kullanılmadı) -->
+    <!-- TODO PANEL (Overlay Eklendi) -->
+    <div id="todoOverlay" onclick="safeApp.toggleTodo()" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden transition-opacity duration-300"></div>
     <div id="todoPanel" class="fixed inset-y-0 right-0 w-80 glass-panel z-50 transform translate-x-full transition-transform duration-300 shadow-2xl flex flex-col border-l border-white/10">
         <div class="p-5 border-b border-white/10 flex justify-between items-center bg-black/20">
             <h3 class="font-bold text-sm uppercase tracking-widest text-white/70">Görevler</h3>
@@ -179,22 +168,17 @@
     </div>
 
     <script>
-        // Hata korumalı ana uygulama nesnesi
         const safeApp = (function() {
-            // Güvenli LocalStorage Wrapper
             const storage = {
                 get: (key) => {
-                    try { return JSON.parse(localStorage.getItem(key)); } 
-                    catch (e) { return null; }
+                    try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
                 },
                 set: (key, val) => {
-                    try { localStorage.setItem(key, JSON.stringify(val)); } 
-                    catch (e) { console.warn('Storage disabled'); }
+                    try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
                 }
             };
 
-            // Varsayılan Veriler
-            let data = storage.get('hp_v5') || {
+            let data = storage.get('hp_v6') || {
                 name: 'Kaptan',
                 theme: 'midnight',
                 engineIdx: 0,
@@ -205,7 +189,6 @@
                 todos: []
             };
 
-            // Sabitler
             const themes = {
                 midnight: 'linear-gradient(to bottom right, #0f172a, #000000)',
                 sunset: 'linear-gradient(to bottom right, #831843, #1e1b4b)',
@@ -219,22 +202,24 @@
                 { n: 'YT', u: 'https://youtube.com/results?search_query=', i: 'ph-youtube-logo' }
             ];
 
-            // DOM Elementleri (Lazy Load)
-            const el = (id) => document.getElementById(id);
+            // Makro Tanımları
+            const macros = {
+                '#yt': { u: 'https://youtube.com/results?search_query=' },
+                '#g': { u: 'https://google.com/search?q=' },
+                '#gh': { u: 'https://github.com/search?q=' },
+                '#bing': { u: 'https://bing.com/search?q=' }
+            };
 
-            // --- FONKSİYONLAR ---
+            const el = (id) => document.getElementById(id);
 
             function init() {
                 applyTheme();
                 renderAll();
                 startClock();
-                // Yükleniyor yazısını göster (Fade in)
                 if(el('miniDate')) el('miniDate').classList.remove('opacity-0');
             }
 
-            function save() {
-                storage.set('hp_v5', data);
-            }
+            function save() { storage.set('hp_v6', data); }
 
             function applyTheme() {
                 document.body.style.background = themes[data.theme] || themes.midnight;
@@ -246,7 +231,6 @@
                     const now = new Date();
                     if(el('clock')) el('clock').innerText = now.toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
                     if(el('miniDate')) el('miniDate').innerText = now.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric', month:'long'});
-                    
                     const h = now.getHours();
                     const greet = h<6 ? 'İyi Geceler' : h<12 ? 'Günaydın' : h<18 ? 'Tünaydın' : 'İyi Akşamlar';
                     if(el('greeting')) el('greeting').innerText = greet;
@@ -255,8 +239,6 @@
                 setInterval(tick, 1000);
             }
 
-            // --- RENDER ---
-            
             function renderAll() {
                 if(el('userNameDisplay')) el('userNameDisplay').innerText = data.name;
                 if(el('nameInput')) el('nameInput').value = data.name;
@@ -286,7 +268,6 @@
                 if(!list) return;
                 const active = data.todos.filter(t => !t.done).length;
                 el('todoBadge').classList.toggle('hidden', active === 0);
-                
                 list.innerHTML = data.todos.length ? data.todos.map((t, i) => `
                     <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 mb-2 group">
                         <div onclick="safeApp.toggleTodoItem(${i})" class="flex items-center gap-3 flex-1 cursor-pointer">
@@ -311,24 +292,34 @@
             function updateEngineUI() {
                 const eng = engines[data.engineIdx];
                 if(el('engineName')) el('engineName').innerText = eng.n;
-                if(el('searchInput')) el('searchInput').placeholder = `${eng.n}'da ara...`;
+                if(el('searchInput')) el('searchInput').placeholder = `${eng.n}'da ara... (#yt, #g)`;
             }
-
-            // --- ACTIONS ---
 
             return {
                 init,
                 updateName: (val) => { data.name = val; el('userNameDisplay').innerText = val; save(); },
                 setTheme: (key) => { data.theme = key; applyTheme(); save(); },
-                
-                // Search
                 cycleEngine: () => { data.engineIdx = (data.engineIdx + 1) % engines.length; save(); updateEngineUI(); },
+                
+                // Makro Destekli Arama
                 search: () => {
-                    const q = el('searchInput').value.trim();
-                    if(q) window.location.href = engines[data.engineIdx].u + encodeURIComponent(q);
+                    let q = el('searchInput').value.trim();
+                    if(!q) return;
+
+                    let targetUrl = engines[data.engineIdx].u;
+                    
+                    // Makro kontrolü
+                    for (const [key, macro] of Object.entries(macros)) {
+                        if (q.endsWith(key)) {
+                            targetUrl = macro.u;
+                            q = q.slice(0, -key.length).trim(); // Makroyu sil
+                            break;
+                        }
+                    }
+
+                    window.location.href = targetUrl + encodeURIComponent(q);
                 },
 
-                // Links
                 addLink: () => {
                     const t = el('linkTitle').value;
                     let u = el('linkUrl').value;
@@ -340,36 +331,50 @@
                     }
                 },
                 deleteLink: (i) => { if(confirm('Sil?')) { data.links.splice(i, 1); save(); renderLinks(); } },
-
-                // Todos
                 addTodo: () => {
                     const t = el('todoInput').value.trim();
                     if(t) { data.todos.push({text:t, done:false}); save(); renderTodos(); el('todoInput').value=''; }
                 },
                 toggleTodoItem: (i) => { data.todos[i].done = !data.todos[i].done; save(); renderTodos(); },
                 deleteTodo: (i) => { data.todos.splice(i, 1); save(); renderTodos(); },
-
-                // UI Toggles
+                
                 toggleSettings: () => {
                     const m = el('settingsModal');
                     const isActive = m.classList.contains('modal-active');
                     if(isActive) m.classList.remove('modal-active');
-                    else { el('todoPanel').classList.remove('translate-x-0'); m.classList.add('modal-active'); }
+                    else { 
+                        // Todo açıksa kapat
+                        const p = el('todoPanel');
+                        if (p.classList.contains('translate-x-0')) safeApp.toggleTodo();
+                        m.classList.add('modal-active'); 
+                    }
                 },
+
+                // DÜZELTİLMİŞ TODO TOGGLE
                 toggleTodo: () => {
                     const p = el('todoPanel');
-                    const isActive = p.classList.contains('translate-x-0'); // translate-x-full yerine 0 kontrolü
-                    if(isActive) p.classList.remove('translate-x-0');
-                    else { 
-                        el('settingsModal').classList.remove('modal-active');
-                        p.classList.add('translate-x-0'); 
-                        el('todoPanel').classList.remove('translate-x-full'); // Tailwind class fix
+                    const o = el('todoOverlay');
+                    const isOpen = p.classList.contains('translate-x-0');
+
+                    if (isOpen) {
+                        // Kapat
+                        p.classList.remove('translate-x-0');
+                        p.classList.add('translate-x-full');
+                        o.classList.add('hidden');
+                    } else {
+                        // Aç
+                        // Ayarlar açıksa kapat
+                        const m = el('settingsModal');
+                        if (m.classList.contains('modal-active')) m.classList.remove('modal-active');
+                        
+                        p.classList.remove('translate-x-full');
+                        p.classList.add('translate-x-0');
+                        o.classList.remove('hidden');
                     }
                 }
             };
         })();
 
-        // Başlat
         window.addEventListener('DOMContentLoaded', safeApp.init);
     </script>
 </body>

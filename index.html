@@ -40,6 +40,7 @@
             color: white;
             overscroll-behavior-y: none;
             -webkit-tap-highlight-color: transparent;
+            user-select: none; /* Metin seçimini de engelle */
         }
         .glass-panel {
             background: rgba(255, 255, 255, 0.08);
@@ -65,13 +66,13 @@
         .transition-all-300 { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
     </style>
 </head>
-<body class="antialiased selection:bg-blue-500/40 relative overflow-hidden">
+<body class="antialiased selection:bg-blue-500/40 relative overflow-hidden" oncontextmenu="return false;">
 
     <!-- Header -->
     <header class="absolute top-0 left-0 w-full p-4 md:p-6 flex justify-between items-start z-30">
-        <div class="opacity-80">
+        <div class="opacity-80 pt-2 pl-1">
             <div id="miniDate" class="text-[10px] font-bold tracking-[0.2em] uppercase text-blue-200 opacity-0 transition-opacity duration-500">...</div>
-            <div class="text-sm font-medium mt-0.5">Kontrol Merkezi</div>
+            <!-- Kontrol Merkezi yazısı silindi -->
         </div>
 
         <div class="flex gap-3">
@@ -108,7 +109,7 @@
                     type="text" 
                     id="searchInput"
                     class="w-full py-4 pl-12 pr-16 rounded-2xl glass-input text-lg placeholder-white/30"
-                    placeholder="Google'da ara... (#yt, #gh)"
+                    placeholder="Arama yap..."
                     autocomplete="off"
                 >
             </form>
@@ -137,7 +138,7 @@
                 </div>
                 <div>
                     <label class="text-xs text-white/60 block mb-2">Tema</label>
-                    <div class="grid grid-cols-5 gap-2" id="colorOptions"></div>
+                    <div class="grid grid-cols-4 gap-2" id="colorOptions"></div>
                 </div>
                 <div class="pt-4 border-t border-white/10">
                     <label class="text-xs text-white/60 block mb-2">Kısayol Ekle</label>
@@ -147,11 +148,14 @@
                         <button onclick="safeApp.addLink()" class="w-full py-2 bg-white/10 hover:bg-blue-600 rounded-lg text-xs font-bold transition">Ekle</button>
                     </div>
                 </div>
+                <div class="pt-2 text-center">
+                     <button onclick="safeApp.reset()" class="text-[10px] text-red-400 opacity-60 hover:opacity-100">Ayarları Sıfırla</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- TODO PANEL (Overlay Eklendi) -->
+    <!-- TODO PANEL -->
     <div id="todoOverlay" onclick="safeApp.toggleTodo()" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden transition-opacity duration-300"></div>
     <div id="todoPanel" class="fixed inset-y-0 right-0 w-80 glass-panel z-50 transform translate-x-full transition-transform duration-300 shadow-2xl flex flex-col border-l border-white/10">
         <div class="p-5 border-b border-white/10 flex justify-between items-center bg-black/20">
@@ -175,10 +179,13 @@
                 },
                 set: (key, val) => {
                     try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+                },
+                clear: (key) => {
+                     try { localStorage.removeItem(key); } catch(e){}
                 }
             };
 
-            let data = storage.get('hp_v6') || {
+            let data = storage.get('hp_v7') || {
                 name: 'Kaptan',
                 theme: 'midnight',
                 engineIdx: 0,
@@ -194,7 +201,10 @@
                 sunset: 'linear-gradient(to bottom right, #831843, #1e1b4b)',
                 ocean: 'linear-gradient(to bottom right, #1e3a8a, #0f172a)',
                 forest: 'linear-gradient(to bottom right, #14532d, #020617)',
-                void: 'linear-gradient(to bottom right, #000000, #111)'
+                void: 'linear-gradient(to bottom right, #000000, #111)',
+                nebula: 'linear-gradient(to bottom right, #4c1d95, #be185d)', // Yeni: Nebula (Mor)
+                northern: 'linear-gradient(to bottom right, #0f766e, #0c4a6e)', // Yeni: Kuzey (Turkuaz)
+                gold: 'linear-gradient(to bottom right, #713f12, #000000)' // Yeni: Altın
             };
 
             const engines = [
@@ -202,7 +212,6 @@
                 { n: 'YT', u: 'https://youtube.com/results?search_query=', i: 'ph-youtube-logo' }
             ];
 
-            // Makro Tanımları
             const macros = {
                 '#yt': { u: 'https://youtube.com/results?search_query=' },
                 '#g': { u: 'https://google.com/search?q=' },
@@ -213,13 +222,16 @@
             const el = (id) => document.getElementById(id);
 
             function init() {
+                // Sağ tık engelleme JS tarafında da garanti olsun
+                document.addEventListener('contextmenu', event => event.preventDefault());
+                
                 applyTheme();
                 renderAll();
                 startClock();
                 if(el('miniDate')) el('miniDate').classList.remove('opacity-0');
             }
 
-            function save() { storage.set('hp_v6', data); }
+            function save() { storage.set('hp_v7', data); }
 
             function applyTheme() {
                 document.body.style.background = themes[data.theme] || themes.midnight;
@@ -292,7 +304,8 @@
             function updateEngineUI() {
                 const eng = engines[data.engineIdx];
                 if(el('engineName')) el('engineName').innerText = eng.n;
-                if(el('searchInput')) el('searchInput').placeholder = `${eng.n}'da ara... (#yt, #g)`;
+                // Placeholder sabit istendiği için burada placeholder güncellemesi yapmıyoruz
+                // Sadece arama motoru ismini güncelliyoruz
             }
 
             return {
@@ -301,22 +314,18 @@
                 setTheme: (key) => { data.theme = key; applyTheme(); save(); },
                 cycleEngine: () => { data.engineIdx = (data.engineIdx + 1) % engines.length; save(); updateEngineUI(); },
                 
-                // Makro Destekli Arama
                 search: () => {
                     let q = el('searchInput').value.trim();
                     if(!q) return;
 
                     let targetUrl = engines[data.engineIdx].u;
-                    
-                    // Makro kontrolü
                     for (const [key, macro] of Object.entries(macros)) {
                         if (q.endsWith(key)) {
                             targetUrl = macro.u;
-                            q = q.slice(0, -key.length).trim(); // Makroyu sil
+                            q = q.slice(0, -key.length).trim();
                             break;
                         }
                     }
-
                     window.location.href = targetUrl + encodeURIComponent(q);
                 },
 
@@ -343,33 +352,32 @@
                     const isActive = m.classList.contains('modal-active');
                     if(isActive) m.classList.remove('modal-active');
                     else { 
-                        // Todo açıksa kapat
                         const p = el('todoPanel');
                         if (p.classList.contains('translate-x-0')) safeApp.toggleTodo();
                         m.classList.add('modal-active'); 
                     }
                 },
-
-                // DÜZELTİLMİŞ TODO TOGGLE
                 toggleTodo: () => {
                     const p = el('todoPanel');
                     const o = el('todoOverlay');
                     const isOpen = p.classList.contains('translate-x-0');
 
                     if (isOpen) {
-                        // Kapat
                         p.classList.remove('translate-x-0');
                         p.classList.add('translate-x-full');
                         o.classList.add('hidden');
                     } else {
-                        // Aç
-                        // Ayarlar açıksa kapat
                         const m = el('settingsModal');
                         if (m.classList.contains('modal-active')) m.classList.remove('modal-active');
-                        
                         p.classList.remove('translate-x-full');
                         p.classList.add('translate-x-0');
                         o.classList.remove('hidden');
+                    }
+                },
+                reset: () => {
+                    if(confirm('Tüm ayarlar sıfırlansın mı?')) {
+                        storage.clear('hp_v7');
+                        location.reload();
                     }
                 }
             };

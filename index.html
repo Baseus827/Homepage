@@ -4,31 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Yeni Sekme</title>
-    
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
     
-    <!-- 1. Fontlar -->
+    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
-    <!-- 2. İkonlar -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- 3. Tailwind Config (CDN'den ÖNCE olmalı) -->
+    <!-- Tailwind Config -->
     <script>
         window.tailwind = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { 
-                        sans: ['Inter', 'sans-serif'], 
-                        mono: ['JetBrains Mono', 'monospace'] 
-                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
                     animation: { 
-                        'fade-in': 'fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-                        'slide-up': 'slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                        'fade-in': 'fadeIn 0.3s ease-out forwards',
+                        'slide-up': 'slideUp 0.4s ease-out forwards' 
                     },
                     keyframes: { 
                         fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
@@ -38,19 +31,10 @@
             }
         }
     </script>
-    
-    <!-- 4. Tailwind CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        /* Fallback & Custom Styles */
-        body {
-            background-color: #0f172a; /* Tailwind yüklenmezse diye */
-            overscroll-behavior-y: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        /* Glass Effect - Tailwind'in backdrop yetmediği yerler için */
+        body { background-color: #0f172a; overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
         .glass-premium {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(20px);
@@ -58,137 +42,120 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
-        
-        /* Custom Scrollbar */
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
-
-        /* Edit Mode Animation */
-        .edit-mode .widget-card {
-            animation: wiggle 0.3s ease-in-out infinite alternate;
-            border-color: rgba(59, 130, 246, 0.5);
-            background: rgba(59, 130, 246, 0.05);
-        }
-        @keyframes wiggle {
-            from { transform: rotate(-0.5deg); }
-            to { transform: rotate(0.5deg); }
-        }
-
-        /* Modal Transitions */
+        
+        .edit-mode .widget-card { border-color: rgba(59, 130, 246, 0.5); background: rgba(59, 130, 246, 0.05); }
         .modal-enter { opacity: 0; transform: scale(0.95); pointer-events: none; }
         .modal-active { opacity: 1; transform: scale(1); pointer-events: auto; }
+        
+        /* Calc Grid */
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+        .calc-btn { background: rgba(255,255,255,0.1); border-radius: 4px; padding: 5px; font-size: 0.8rem; }
+        .calc-btn:hover { background: rgba(255,255,255,0.2); }
         
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="antialiased text-white min-h-screen flex flex-col relative overflow-hidden selection:bg-blue-500/30 font-sans transition-colors duration-700" id="bodyBg">
+<body class="antialiased text-white min-h-screen flex flex-col relative overflow-hidden selection:bg-blue-500/30 font-sans transition-colors duration-700">
 
-    <!-- Dinamik Arkaplan Gradient -->
-    <div class="fixed inset-0 -z-10 bg-gradient-to-br from-slate-900 to-black transition-colors duration-700" id="bgGradient"></div>
+    <!-- Dinamik Arkaplan -->
+    <div class="fixed inset-0 -z-10 bg-cover bg-center transition-all duration-700" id="bgLayer"></div>
+    <div class="fixed inset-0 -z-10 bg-black/40" id="bgOverlay"></div>
 
     <!-- Header -->
     <header class="absolute top-0 left-0 w-full p-6 flex justify-between items-start z-50">
         <div class="opacity-0 animate-fade-in" style="animation-delay: 100ms;">
-            <div id="miniDate" class="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40">...</div>
+            <div id="miniDate" class="text-[10px] font-bold tracking-[0.2em] uppercase text-white/50">...</div>
         </div>
-
         <div class="flex gap-3 opacity-0 animate-fade-in" style="animation-delay: 200ms;">
-            <button onclick="app.toggleEdit()" id="editBtn" class="w-10 h-10 rounded-full glass-premium flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all duration-200 text-white/70 hover:text-white">
-                <i class="fa-solid fa-pen text-sm"></i>
-            </button>
-            <button onclick="app.toggleTodo()" class="w-10 h-10 rounded-full glass-premium flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all duration-200 relative group">
+            <button onclick="app.toggleEdit()" id="editBtn" class="w-10 h-10 rounded-full glass-premium flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all text-white/70 hover:text-white"><i class="fa-solid fa-pen text-sm"></i></button>
+            <button onclick="app.toggleTodo()" class="w-10 h-10 rounded-full glass-premium flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all relative group">
                 <i class="fa-solid fa-list-check text-sm"></i>
                 <span id="todoBadge" class="absolute top-0 right-0 w-2.5 h-2.5 bg-blue-500 rounded-full border-2 border-black hidden"></span>
             </button>
-            <button onclick="app.toggleSettings()" class="w-10 h-10 rounded-full glass-premium flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all duration-200">
-                <i class="fa-solid fa-gear text-sm"></i>
-            </button>
+            <button onclick="app.toggleSettings()" class="w-10 h-10 rounded-full glass-premium flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all"><i class="fa-solid fa-gear text-sm"></i></button>
         </div>
     </header>
 
     <!-- Main Content -->
     <main class="flex-1 flex flex-col items-center justify-start pt-24 pb-10 px-4 w-full max-w-6xl mx-auto overflow-y-auto custom-scroll z-10">
-        
-        <!-- Saat ve Selamlama -->
+        <!-- Saat -->
         <div class="text-center mb-10 animate-slide-up select-none">
-            <h1 id="clock" class="text-7xl md:text-9xl font-bold tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 font-mono drop-shadow-2xl">
-                00:00
-            </h1>
+            <h1 id="clock" class="text-7xl md:text-9xl font-bold tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 font-mono drop-shadow-2xl">00:00</h1>
             <div class="mt-4 text-xl font-light text-white/70">
                 <span id="greetText">Merhaba</span>, <span id="nameText" class="font-medium text-white border-b border-white/10 pb-0.5">Kaptan</span>
             </div>
         </div>
 
-        <!-- Arama Çubuğu -->
+        <!-- Arama -->
         <div class="w-full max-w-xl relative group mb-10 animate-slide-up" style="animation-delay: 100ms;">
-            <div class="absolute inset-y-0 left-5 flex items-center pointer-events-none text-white/30 group-focus-within:text-white transition-colors duration-300">
-                <i class="fa-solid fa-magnifying-glass text-lg"></i>
-            </div>
+            <div class="absolute inset-y-0 left-5 flex items-center pointer-events-none text-white/30 group-focus-within:text-white transition-colors"><i class="fa-solid fa-magnifying-glass text-lg"></i></div>
             <form onsubmit="event.preventDefault(); app.search()">
-                <input 
-                    type="text" 
-                    id="searchInput"
-                    class="w-full py-4 pl-14 pr-20 rounded-2xl glass-premium bg-white/5 focus:bg-white/10 text-lg placeholder-white/20 outline-none transition-all duration-300 shadow-2xl border-white/5 hover:border-white/10 focus:border-white/20 focus:ring-1 focus:ring-white/20"
-                    placeholder="Arama yap..."
-                    autocomplete="off"
-                >
+                <input type="text" id="searchInput" class="w-full py-4 pl-14 pr-20 rounded-2xl glass-premium bg-white/5 focus:bg-white/10 text-lg placeholder-white/20 outline-none transition-all shadow-2xl border-white/5 hover:border-white/10 focus:border-white/20" placeholder="Arama yap..." autocomplete="off">
             </form>
-            <button onclick="app.cycleEngine()" class="absolute inset-y-2 right-2 px-3 rounded-xl hover:bg-white/10 text-xs text-white/40 hover:text-white transition-all font-bold tracking-wide uppercase font-mono" id="engineName">
-                GGL
-            </button>
+            <button onclick="app.cycleEngine()" class="absolute inset-y-2 right-2 px-3 rounded-xl hover:bg-white/10 text-xs text-white/40 hover:text-white transition-all font-bold tracking-wide uppercase font-mono" id="engineName">GGL</button>
         </div>
 
-        <!-- WIDGET GRID AREA -->
-        <div id="widgetGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-5xl mb-10 animate-slide-up hidden" style="animation-delay: 200ms;">
-            <!-- JS Will Populate This -->
-        </div>
+        <!-- Widget Grid -->
+        <div id="widgetGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-5xl mb-10 animate-slide-up hidden" style="animation-delay: 200ms;"></div>
 
-        <!-- ADD WIDGET BAR (Edit Mode) -->
+        <!-- Edit Mode Toolbar -->
         <div id="addWidgetBar" class="w-full max-w-5xl mb-10 hidden animate-fade-in flex flex-wrap justify-center gap-3">
-            <button onclick="app.addWidget('weather')" class="px-5 py-2 glass-premium rounded-full text-xs font-bold hover:bg-blue-500/20 hover:border-blue-500/50 transition-all flex items-center gap-2"><i class="fa-solid fa-cloud"></i> Hava</button>
-            <button onclick="app.addWidget('crypto')" class="px-5 py-2 glass-premium rounded-full text-xs font-bold hover:bg-orange-500/20 hover:border-orange-500/50 transition-all flex items-center gap-2"><i class="fa-brands fa-bitcoin"></i> Kripto</button>
-            <button onclick="app.addWidget('pomodoro')" class="px-5 py-2 glass-premium rounded-full text-xs font-bold hover:bg-red-500/20 hover:border-red-500/50 transition-all flex items-center gap-2"><i class="fa-regular fa-clock"></i> Odak</button>
-            <button onclick="app.addWidget('notes')" class="px-5 py-2 glass-premium rounded-full text-xs font-bold hover:bg-yellow-500/20 hover:border-yellow-500/50 transition-all flex items-center gap-2"><i class="fa-solid fa-note-sticky"></i> Not</button>
+            <button onclick="app.addWidget('weather')" class="px-4 py-2 glass-premium rounded-full text-xs font-bold hover:bg-blue-500/20 flex items-center gap-2"><i class="fa-solid fa-cloud"></i> Hava</button>
+            <button onclick="app.addWidget('crypto')" class="px-4 py-2 glass-premium rounded-full text-xs font-bold hover:bg-orange-500/20 flex items-center gap-2"><i class="fa-brands fa-bitcoin"></i> Kripto</button>
+            <button onclick="app.addWidget('pomodoro')" class="px-4 py-2 glass-premium rounded-full text-xs font-bold hover:bg-red-500/20 flex items-center gap-2"><i class="fa-regular fa-clock"></i> Odak</button>
+            <button onclick="app.addWidget('notes')" class="px-4 py-2 glass-premium rounded-full text-xs font-bold hover:bg-yellow-500/20 flex items-center gap-2"><i class="fa-solid fa-note-sticky"></i> Not</button>
+            <button onclick="app.addWidget('calculator')" class="px-4 py-2 glass-premium rounded-full text-xs font-bold hover:bg-green-500/20 flex items-center gap-2"><i class="fa-solid fa-calculator"></i> Hesap</button>
+            <button onclick="app.addWidget('countdown')" class="px-4 py-2 glass-premium rounded-full text-xs font-bold hover:bg-purple-500/20 flex items-center gap-2"><i class="fa-solid fa-hourglass-half"></i> Sayaç</button>
         </div>
 
-        <!-- Linkler Grid -->
+        <!-- Linkler -->
         <div id="linksGrid" class="grid grid-cols-4 md:grid-cols-6 gap-4 w-full max-w-3xl animate-slide-up" style="animation-delay: 300ms;"></div>
-
     </main>
 
     <!-- SETTINGS MODAL -->
     <div id="settingsModal" class="fixed inset-0 z-[60] flex items-center justify-center modal-enter transition-all duration-300">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="app.toggleSettings()"></div>
-        <div class="relative w-80 glass-premium bg-[#0f172a]/80 rounded-3xl p-6 transform transition-all duration-300 scale-100 shadow-2xl border border-white/10">
+        <div class="relative w-80 glass-premium bg-[#0f172a]/90 rounded-3xl p-6 transform transition-all duration-300 shadow-2xl border border-white/10 max-h-[85vh] overflow-y-auto custom-scroll">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xs font-bold uppercase tracking-widest text-white/50">Ayarlar</h3>
                 <button onclick="app.toggleSettings()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
             <div class="space-y-6">
+                <!-- Kimlik -->
                 <div class="space-y-2">
                     <label class="text-[10px] font-bold uppercase text-white/40 tracking-wider">İsim</label>
-                    <input id="nameInput" oninput="app.updateName(this.value)" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all">
+                    <input id="nameInput" oninput="app.updateName(this.value)" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-white/30">
                 </div>
-
+                
+                <!-- Arkaplan -->
                 <div class="space-y-2">
-                    <label class="text-[10px] font-bold uppercase text-white/40 tracking-wider">Tema</label>
+                    <label class="text-[10px] font-bold uppercase text-white/40 tracking-wider">Görünüm</label>
                     <div class="grid grid-cols-5 gap-2" id="themeGrid"></div>
+                    <input id="customBgInput" onchange="app.setCustomBg(this.value)" placeholder="Özel Arkaplan URL'si..." class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs focus:outline-none mt-2">
                 </div>
 
-                <div class="space-y-3 pt-4 border-t border-white/10">
-                    <label class="text-[10px] font-bold uppercase text-white/40 tracking-wider">Hızlı Erişim Ekle</label>
+                <!-- Link Ekle -->
+                <div class="space-y-2 pt-4 border-t border-white/10">
+                    <label class="text-[10px] font-bold uppercase text-white/40 tracking-wider">Kısayol Ekle</label>
                     <div class="flex flex-col gap-2">
                         <input id="linkTitle" placeholder="Başlık" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none">
                         <input id="linkUrl" placeholder="URL" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none">
-                        <button onclick="app.addLink()" class="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded-xl text-xs font-bold transition shadow-lg shadow-blue-500/20">Ekle</button>
+                        <button onclick="app.addLink()" class="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded-xl text-xs font-bold transition">Ekle</button>
                     </div>
                 </div>
-                
-                <div class="pt-2 text-center">
-                     <button onclick="app.reset()" class="text-[10px] text-red-400/70 hover:text-red-400 transition">Fabrika Ayarlarına Dön</button>
+
+                <!-- Yedekleme & Sıfırlama -->
+                <div class="pt-4 border-t border-white/10 grid grid-cols-2 gap-2">
+                    <button onclick="app.exportData()" class="py-2 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] font-bold transition"><i class="fa-solid fa-download"></i> Yedek Al</button>
+                    <label class="py-2 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] font-bold transition text-center cursor-pointer">
+                        <i class="fa-solid fa-upload"></i> Yükle
+                        <input type="file" onchange="app.importData(this)" class="hidden" accept=".json">
+                    </label>
+                    <button onclick="app.reset()" class="col-span-2 py-2 text-red-400/70 hover:text-red-400 text-[10px] transition">Fabrika Ayarları</button>
                 </div>
             </div>
         </div>
@@ -198,98 +165,106 @@
     <div id="widgetModal" class="fixed inset-0 z-[70] flex items-center justify-center modal-enter transition-all duration-300">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="app.closeWidgetSettings()"></div>
         <div class="relative w-80 glass-premium bg-[#0f172a]/90 rounded-3xl p-6 transform transition-all duration-300 z-10">
-            <h3 class="text-xs font-bold uppercase tracking-widest text-white/50 mb-4">Widget Düzenle</h3>
+            <h3 class="text-xs font-bold uppercase tracking-widest text-white/50 mb-4">Widget Ayarı</h3>
             <div id="widgetSettingsForm" class="space-y-4"></div>
             <div class="mt-6 flex justify-end">
-                <button onclick="app.saveWidgetSettings()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg">Kaydet</button>
+                <button onclick="app.saveWidgetSettings()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-xl text-xs font-bold">Kaydet</button>
             </div>
         </div>
     </div>
 
     <!-- TODO SIDEBAR -->
-    <div id="todoPanel" class="fixed inset-y-0 right-0 w-80 glass-premium bg-[#0f172a]/90 z-[55] transform translate-x-full transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] flex flex-col border-l border-white/10 shadow-2xl backdrop-blur-xl">
+    <div id="todoPanel" class="fixed inset-y-0 right-0 w-80 glass-premium bg-[#0f172a]/95 z-[55] transform translate-x-full transition-transform duration-300 flex flex-col border-l border-white/10 shadow-2xl backdrop-blur-xl">
         <div class="p-6 border-b border-white/10 flex justify-between items-center">
             <h3 class="font-bold text-sm uppercase tracking-widest text-white/70">Görevler</h3>
             <button onclick="app.toggleTodo()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        
         <div id="todoList" class="flex-1 overflow-y-auto p-4 space-y-2 custom-scroll"></div>
-
         <div class="p-4 bg-black/20 border-t border-white/10 relative">
-            <input id="todoInput" onkeydown="if(event.key==='Enter') app.addTodo()" type="text" placeholder="Yeni görev..." class="w-full pl-4 pr-10 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-white/30 focus:bg-white/10 outline-none text-sm transition-all">
+            <input id="todoInput" onkeydown="if(event.key==='Enter') app.addTodo()" type="text" placeholder="Görev ekle..." class="w-full pl-4 pr-10 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-white/30 focus:bg-white/10 outline-none text-sm transition-all">
             <button onclick="app.addTodo()" class="absolute right-6 top-1/2 -translate-y-1/2 text-blue-400 hover:text-white transition"><i class="fa-solid fa-plus"></i></button>
         </div>
     </div>
-    
-    <!-- Overlay for sidebar -->
     <div id="todoOverlay" onclick="app.toggleTodo()" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden transition-opacity duration-300"></div>
 
     <script>
         const app = (function() {
-            // --- STORAGE & DATA ---
+            // --- CONSTANTS ---
+            const THEMES = {
+                midnight: 'linear-gradient(to bottom right, #0f172a, #000000)',
+                ocean: 'linear-gradient(to bottom right, #1e3a8a, #0f172a)',
+                forest: 'linear-gradient(to bottom right, #064e3b, #022c22)',
+                sunset: 'linear-gradient(to bottom right, #881337, #1e1b4b)',
+                cyber: 'linear-gradient(to bottom right, #111827, #000000)'
+            };
+            const ENGINES = [
+                { n: 'GGL', u: 'https://google.com/search?q=' },
+                { n: 'YT', u: 'https://youtube.com/results?search_query=' },
+                { n: 'GH', u: 'https://github.com/search?q=' }
+            ];
+            
+            // --- STATE & STORAGE ---
             const storage = {
                 get: (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
                 set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
                 clear: (k) => { try { localStorage.removeItem(k); } catch {} }
             };
 
-            let data = storage.get('hp_v11') || {
+            const defaultData = {
+                version: 12,
                 name: 'Kaptan',
                 theme: 'midnight',
+                customBg: '',
                 engineIdx: 0,
                 widgets: [
                     { id: 'w1', type: 'weather', span: 1, settings: { city: 'Istanbul' } },
-                    { id: 'w2', type: 'crypto', span: 1, settings: { symbol: 'BTCUSDT', name: 'Bitcoin' } },
+                    { id: 'w2', type: 'calculator', span: 1, settings: {} },
                     { id: 'w3', type: 'pomodoro', span: 1, settings: {} },
                     { id: 'w4', type: 'notes', span: 1, settings: { content: '' } }
                 ],
                 links: [
                     { t: 'YouTube', u: 'https://youtube.com', i: 'fa-youtube' },
-                    { t: 'Google', u: 'https://google.com', i: 'fa-google' }
+                    { t: 'ChatGPT', u: 'https://chat.openai.com', i: 'fa-robot' }
                 ],
                 todos: []
             };
 
-            // Global State
+            // Veri Birleştirme (Sanitization)
+            let saved = storage.get('hp_v12');
+            let data = saved ? { ...defaultData, ...saved } : defaultData;
+            // Eski widget yapılarını koru ama eksik alanları tamamla
+            if(saved) data.widgets = saved.widgets || defaultData.widgets;
+
+            // Runtime Vars
             let isEditMode = false;
             let currentWid = null;
-            let pomoInt = null;
-
-            // --- CONSTANTS ---
-            const themes = {
-                midnight: 'from-slate-900 to-black',
-                ocean: 'from-blue-900 to-slate-900',
-                forest: 'from-emerald-900 to-slate-900',
-                cyber: 'from-purple-900 to-black',
-                sunset: 'from-rose-900 to-indigo-950'
-            };
-
-            const engines = [
-                { n: 'GGL', u: 'https://google.com/search?q=' },
-                { n: 'YT', u: 'https://youtube.com/results?search_query=' },
-                { n: 'GH', u: 'https://github.com/search?q=' }
-            ];
+            let intervals = {}; // Pomodoro ve Sayaç için
 
             const el = (id) => document.getElementById(id);
 
             // --- INIT ---
             function init() {
-                applyTheme();
+                applyLook();
                 renderAll();
                 startClock();
                 refreshWidgets();
-                
-                // Show date fade in
                 setTimeout(() => el('miniDate').classList.remove('opacity-0'), 100);
             }
 
-            function save() { storage.set('hp_v11', data); }
+            function save() { storage.set('hp_v12', data); }
 
-            function applyTheme() {
-                // Tailwind classes for gradients
-                const bgEl = el('bgGradient');
-                // Reset classes
-                bgEl.className = `fixed inset-0 -z-10 bg-gradient-to-br transition-colors duration-700 ${themes[data.theme] || themes.midnight}`;
+            // --- APPEARANCE ---
+            function applyLook() {
+                const bgLayer = el('bgLayer');
+                if (data.customBg) {
+                    bgLayer.style.backgroundImage = `url('${data.customBg}')`;
+                    bgLayer.className = "fixed inset-0 -z-10 bg-cover bg-center transition-all duration-700 opacity-100";
+                    el('bgOverlay').classList.remove('hidden');
+                } else {
+                    bgLayer.style.backgroundImage = 'none';
+                    bgLayer.style.background = THEMES[data.theme] || THEMES.midnight;
+                    el('bgOverlay').classList.add('hidden');
+                }
                 renderThemes();
             }
 
@@ -300,78 +275,88 @@
                     el('miniDate').innerText = now.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric', month:'long'});
                     const h = now.getHours();
                     el('greetText').innerText = h<6?'İyi Geceler':h<12?'Günaydın':h<18?'Tünaydın':'İyi Akşamlar';
+                    
+                    // Countdown update
+                    updateCountdowns();
                 };
                 tick(); setInterval(tick, 1000);
             }
 
-            // --- RENDERERS ---
-            function renderAll() {
-                el('nameText').innerText = data.name;
-                el('nameInput').value = data.name;
-                renderWidgets();
-                renderLinks();
-                renderTodos();
-                // FIX: Use 'engineName' ID instead of 'engineBadge'
-                el('engineName').innerText = engines[data.engineIdx].n;
-            }
-
+            // --- WIDGET RENDERERS ---
             function renderWidgets() {
                 const grid = el('widgetGrid');
                 if(data.widgets.length === 0 && !isEditMode) { grid.classList.add('hidden'); return; }
                 grid.classList.remove('hidden');
 
-                grid.innerHTML = data.widgets.map(w => {
-                    let content = '';
+                grid.innerHTML = data.widgets.map((w, index) => {
+                    let content = getWidgetContent(w);
+                    let controls = `
+                        <div class="absolute top-1 right-1 hidden gap-1 z-20 group-hover:flex ${isEditMode?'flex':''}">
+                            ${index > 0 ? `<button onclick="app.wMove('${w.id}', -1)" class="w-6 h-6 rounded-full bg-slate-600 hover:bg-slate-500 text-[10px] flex items-center justify-center shadow-lg"><i class="fa-solid fa-arrow-left"></i></button>` : ''}
+                            ${index < data.widgets.length-1 ? `<button onclick="app.wMove('${w.id}', 1)" class="w-6 h-6 rounded-full bg-slate-600 hover:bg-slate-500 text-[10px] flex items-center justify-center shadow-lg"><i class="fa-solid fa-arrow-right"></i></button>` : ''}
+                            <button onclick="app.wResize('${w.id}')" class="w-6 h-6 rounded-full bg-blue-600 hover:bg-blue-500 text-[10px] flex items-center justify-center shadow-lg"><i class="fa-solid fa-expand"></i></button>
+                            <button onclick="app.wEdit('${w.id}')" class="w-6 h-6 rounded-full bg-slate-600 hover:bg-slate-500 text-[10px] flex items-center justify-center shadow-lg"><i class="fa-solid fa-gear"></i></button>
+                            <button onclick="app.wDel('${w.id}')" class="w-6 h-6 rounded-full bg-red-600 hover:bg-red-500 text-[10px] flex items-center justify-center shadow-lg"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    `;
                     const spanClass = w.span === 2 ? 'col-span-2' : 'col-span-1';
-                    
-                    if(w.type === 'weather') {
-                        content = `
+                    return `<div class="glass-premium rounded-2xl p-4 flex flex-col relative group transition-all duration-300 hover:bg-white/5 min-h-[140px] widget-card ${spanClass}">${controls}${content}</div>`;
+                }).join('');
+            }
+
+            function getWidgetContent(w) {
+                switch(w.type) {
+                    case 'weather':
+                        return `
                             <div class="flex justify-between items-start mb-2">
                                 <i class="fa-solid fa-cloud-sun text-2xl text-yellow-300"></i>
-                                <span class="text-[10px] uppercase font-bold opacity-60 tracking-wider">${w.settings.city}</span>
+                                <span class="text-[10px] uppercase font-bold opacity-60 tracking-wider">${w.settings.city || 'Şehir'}</span>
                             </div>
-                            <div id="v-${w.id}" class="text-2xl font-bold mt-auto">--°C</div>
-                        `;
-                    } else if(w.type === 'crypto') {
-                        content = `
+                            <div class="mt-auto">
+                                <div id="v-${w.id}" class="text-2xl font-bold">--°C</div>
+                                <button onclick="app.refreshW('${w.id}')" class="text-[10px] opacity-50 hover:opacity-100">Yenile</button>
+                            </div>`;
+                    case 'crypto':
+                        return `
                             <div class="flex justify-between items-start mb-2">
                                 <i class="fa-brands fa-bitcoin text-2xl text-orange-400"></i>
-                                <span class="text-[10px] uppercase font-bold opacity-60 tracking-wider">${w.settings.name}</span>
+                                <span class="text-[10px] uppercase font-bold opacity-60 tracking-wider">${w.settings.name || 'Crypto'}</span>
                             </div>
-                            <div id="v-${w.id}" class="text-xl font-bold font-mono mt-auto tracking-tight">...</div>
-                        `;
-                    } else if(w.type === 'pomodoro') {
-                        content = `
+                            <div class="mt-auto">
+                                <div id="v-${w.id}" class="text-xl font-bold font-mono tracking-tight">...</div>
+                                <button onclick="app.refreshW('${w.id}')" class="text-[10px] opacity-50 hover:opacity-100">Yenile</button>
+                            </div>`;
+                    case 'pomodoro':
+                        return `
                             <div class="flex flex-col items-center justify-center h-full relative">
                                 <div id="v-${w.id}" class="text-3xl font-mono font-bold tracking-widest text-white/90">25:00</div>
                                 <button onclick="app.pomoToggle('${w.id}')" id="b-${w.id}" class="mt-2 text-2xl hover:text-blue-400 transition-colors transform active:scale-90"><i class="fa-regular fa-circle-play"></i></button>
                                 <span class="absolute top-0 right-0 text-[9px] uppercase font-bold opacity-30">FOCUS</span>
-                            </div>
-                        `;
-                    } else if(w.type === 'notes') {
-                        content = `
-                            <textarea oninput="app.saveNote('${w.id}', this.value)" class="w-full h-full bg-transparent border-none resize-none outline-none text-xs leading-relaxed custom-scroll text-white/80 placeholder-white/20" placeholder="Hızlı not...">${w.settings.content || ''}</textarea>
-                        `;
-                    }
-
-                    // Edit Controls
-                    const controls = `
-                        <div class="absolute top-1 right-1 hidden gap-1 z-20 group-hover:flex ${isEditMode ? 'flex' : ''}">
-                            <button onclick="app.wResize('${w.id}')" class="w-6 h-6 rounded-full bg-blue-600 hover:bg-blue-500 text-[10px] flex items-center justify-center shadow-lg transform hover:scale-110 transition"><i class="fa-solid fa-expand"></i></button>
-                            <button onclick="app.wEdit('${w.id}')" class="w-6 h-6 rounded-full bg-slate-600 hover:bg-slate-500 text-[10px] flex items-center justify-center shadow-lg transform hover:scale-110 transition"><i class="fa-solid fa-gear"></i></button>
-                            <button onclick="app.wDel('${w.id}')" class="w-6 h-6 rounded-full bg-red-600 hover:bg-red-500 text-[10px] flex items-center justify-center shadow-lg transform hover:scale-110 transition"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    `;
-
-                    return `
-                        <div class="glass-premium rounded-2xl p-4 flex flex-col relative group transition-all duration-300 hover:bg-white/5 min-h-[140px] widget-card ${spanClass}">
-                            ${controls}
-                            ${content}
-                        </div>
-                    `;
-                }).join('');
+                            </div>`;
+                    case 'notes':
+                        return `<textarea oninput="app.saveNote('${w.id}', this.value)" class="w-full h-full bg-transparent border-none resize-none outline-none text-xs leading-relaxed custom-scroll text-white/80 placeholder-white/20" placeholder="Not...">${w.settings.content || ''}</textarea>`;
+                    case 'calculator':
+                        return `
+                            <div class="h-full flex flex-col">
+                                <input id="calc-d-${w.id}" readonly class="w-full bg-transparent text-right text-lg font-mono mb-2 border-b border-white/10 focus:outline-none" value="0">
+                                <div class="calc-grid flex-1">
+                                    ${['7','8','9','/','4','5','6','*','1','2','3','-','C','0','=','+'].map(btn => 
+                                        `<button onclick="app.calcInput('${w.id}', '${btn}')" class="calc-btn">${btn}</button>`
+                                    ).join('')}
+                                </div>
+                            </div>`;
+                    case 'countdown':
+                        return `
+                            <div class="flex flex-col justify-between h-full">
+                                <span class="text-[10px] uppercase font-bold opacity-60">${w.settings.label || 'Hedef'}</span>
+                                <div id="v-${w.id}" class="text-xl font-bold text-center">--:--:--</div>
+                                <div class="text-[10px] opacity-50 text-right">${w.settings.date ? new Date(w.settings.date).toLocaleDateString() : 'Tarih Seç'}</div>
+                            </div>`;
+                    default: return 'Widget';
+                }
             }
 
+            // --- WIDGET LOGIC ---
             function refreshWidgets() {
                 data.widgets.forEach(w => {
                     if(w.type === 'weather') fetchWeather(w);
@@ -379,16 +364,16 @@
                 });
             }
 
-            // --- API ---
             async function fetchWeather(w) {
                 const elV = el(`v-${w.id}`);
                 if(!elV) return;
                 try {
-                    // Coordinates for Istanbul hardcoded for stability (can be improved with geo-coding)
                     const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=41.0082&longitude=28.9784&current=temperature_2m`);
+                    if(!res.ok) throw new Error();
                     const j = await res.json();
                     elV.innerText = `${Math.round(j.current.temperature_2m)}°C`;
-                } catch { elV.innerText = "?"; }
+                    w.lastData = elV.innerText; save();
+                } catch { elV.innerText = w.lastData || "Hata"; }
             }
 
             async function fetchCrypto(w) {
@@ -396,143 +381,122 @@
                 if(!elV) return;
                 try {
                     const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${w.settings.symbol}`);
+                    if(!res.ok) throw new Error();
                     const j = await res.json();
                     const p = parseFloat(j.price);
                     elV.innerText = `$${p > 10 ? p.toFixed(2) : p.toFixed(4)}`;
-                } catch { elV.innerText = "?"; }
+                    w.lastData = elV.innerText; save();
+                } catch { elV.innerText = w.lastData || "Hata"; }
             }
 
-            // --- ACTIONS ---
-            return {
-                init,
-                updateName: (v) => { data.name = v; el('nameText').innerText = v; save(); },
-                setTheme: (t) => { data.theme = t; applyTheme(); save(); },
-                
-                toggleEdit: () => {
-                    isEditMode = !isEditMode;
-                    document.body.classList.toggle('edit-mode', isEditMode);
-                    const btn = el('editBtn');
-                    const bar = el('addWidgetBar');
-                    if(isEditMode) {
-                        btn.classList.add('bg-white/20', 'text-white');
-                        bar.classList.remove('hidden');
-                    } else {
-                        btn.classList.remove('bg-white/20', 'text-white');
-                        bar.classList.add('hidden');
-                        refreshWidgets();
-                    }
-                    renderWidgets();
-                },
+            // Pomo Logic
+            function pomoToggle(id) {
+                const b = el(`b-${id}`);
+                const v = el(`v-${id}`);
+                if(intervals[id]) { 
+                    clearInterval(intervals[id]); delete intervals[id];
+                    b.innerHTML='<i class="fa-regular fa-circle-play"></i>'; v.innerText='25:00'; v.classList.remove('text-blue-400');
+                } else {
+                    let s = 1500;
+                    b.innerHTML='<i class="fa-regular fa-circle-stop"></i>'; v.classList.add('text-blue-400');
+                    intervals[id] = setInterval(()=>{
+                        s--; v.innerText = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+                        if(s<=0) { clearInterval(intervals[id]); delete intervals[id]; alert('Bitti!'); app.pomoToggle(id); }
+                    },1000);
+                }
+            }
 
-                addWidget: (type) => {
-                    const defs = {
-                        weather: { city: 'Istanbul' },
-                        crypto: { symbol: 'BTCUSDT', name: 'BTC' },
-                        pomodoro: {},
-                        notes: { content: '' }
-                    };
-                    data.widgets.push({ id: 'w'+Date.now(), type, span: 1, settings: defs[type] });
+            // Calc Logic
+            function calcInput(id, val) {
+                const d = el(`calc-d-${id}`);
+                if(val === 'C') d.value = '0';
+                else if(val === '=') { try { d.value = eval(d.value); } catch { d.value = 'Err'; } }
+                else { d.value = d.value === '0' ? val : d.value + val; }
+            }
+
+            // Countdown Logic
+            function updateCountdowns() {
+                data.widgets.filter(w => w.type === 'countdown').forEach(w => {
+                    const elV = el(`v-${w.id}`);
+                    if(!elV || !w.settings.date) return;
+                    const diff = new Date(w.settings.date) - new Date();
+                    if(diff <= 0) { elV.innerText = "Tamamlandı"; return; }
+                    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    elV.innerText = `${d}g ${h}s`;
+                });
+            }
+
+            // --- MANAGEMENT ---
+            function addWidget(type) {
+                const defs = { weather: {city:'Istanbul'}, crypto: {symbol:'BTCUSDT', name:'BTC'}, pomodoro:{}, notes:{content:''}, calculator:{}, countdown:{label:'Tatil', date:''} };
+                data.widgets.push({ id: 'w'+Date.now(), type, span: 1, settings: defs[type] });
+                save(); renderWidgets(); refreshWidgets();
+                if(isEditMode) window.scrollTo(0, document.body.scrollHeight);
+            }
+
+            function wMove(id, dir) {
+                const idx = data.widgets.findIndex(w => w.id === id);
+                if (idx < 0) return;
+                const newIdx = idx + dir;
+                if (newIdx >= 0 && newIdx < data.widgets.length) {
+                    [data.widgets[idx], data.widgets[newIdx]] = [data.widgets[newIdx], data.widgets[idx]];
                     save(); renderWidgets();
-                    // Auto scroll to bottom
-                    window.scrollTo(0, document.body.scrollHeight);
-                },
-                
-                wDel: (id) => { if(confirm('Sil?')) { data.widgets = data.widgets.filter(x=>x.id!==id); save(); renderWidgets(); } },
-                wResize: (id) => { const w=data.widgets.find(x=>x.id===id); w.span=w.span===1?2:1; save(); renderWidgets(); },
-                
-                wEdit: (id) => {
-                    currentWid = id;
-                    const w = data.widgets.find(x=>x.id===id);
-                    const f = el('widgetSettingsForm');
-                    if(w.type === 'weather') {
-                        f.innerHTML = `
-                            <div>
-                                <label class="text-xs font-bold uppercase opacity-50 block mb-1">Şehir</label>
-                                <input id="ws-1" value="${w.settings.city}" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30">
-                            </div>`;
-                    } else if(w.type === 'crypto') {
-                        f.innerHTML = `
-                            <div class="space-y-3">
-                                <div>
-                                    <label class="text-xs font-bold uppercase opacity-50 block mb-1">Sembol (Örn: ETHUSDT)</label>
-                                    <input id="ws-1" value="${w.settings.symbol}" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30">
-                                </div>
-                                <div>
-                                    <label class="text-xs font-bold uppercase opacity-50 block mb-1">Görünen İsim</label>
-                                    <input id="ws-2" value="${w.settings.name}" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30">
-                                </div>
-                            </div>`;
-                    } else { f.innerHTML = '<p class="text-white/50 text-sm text-center">Bu widget için ayar yok.</p>'; }
-                    el('widgetModal').classList.add('modal-active');
-                },
-                
-                saveWidgetSettings: () => {
-                    const w = data.widgets.find(x=>x.id===currentWid);
-                    if(w.type === 'weather') w.settings.city = el('ws-1').value;
-                    if(w.type === 'crypto') { w.settings.symbol = el('ws-1').value.toUpperCase(); w.settings.name = el('ws-2').value; }
-                    save(); refreshWidgets(); el('widgetModal').classList.remove('modal-active');
-                },
-                
-                closeWidgetSettings: () => el('widgetModal').classList.remove('modal-active'),
-                saveNote: (id, v) => { data.widgets.find(x=>x.id===id).settings.content = v; save(); },
+                }
+            }
 
-                pomoToggle: (id) => {
-                    const b = el(`b-${id}`);
-                    const v = el(`v-${id}`);
-                    if(pomoInt) { 
-                        clearInterval(pomoInt); pomoInt=null; 
-                        b.innerHTML='<i class="fa-regular fa-circle-play"></i>'; v.innerText='25:00'; 
-                        v.classList.remove('text-blue-400');
-                    } else {
-                        let s = 1500;
-                        b.innerHTML='<i class="fa-regular fa-circle-stop"></i>';
-                        v.classList.add('text-blue-400');
-                        pomoInt = setInterval(()=>{
-                            s--;
-                            v.innerText = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
-                            if(s<=0) { clearInterval(pomoInt); alert('Bitti!'); app.pomoToggle(id); }
-                        },1000);
-                    }
-                },
+            function wEdit(id) {
+                currentWid = id;
+                const w = data.widgets.find(x=>x.id===id);
+                const f = el('widgetSettingsForm');
+                let html = '';
+                if(w.type==='weather') html=`<label class="text-xs opacity-50 block mb-1">Şehir</label><input id="ws-1" value="${w.settings.city}" class="w-full bg-white/5 border border-white/10 rounded p-2 text-sm">`;
+                else if(w.type==='crypto') html=`<label class="text-xs opacity-50 block mb-1">Sembol</label><input id="ws-1" value="${w.settings.symbol}" class="w-full bg-white/5 border border-white/10 rounded p-2 text-sm mb-2"><label class="text-xs opacity-50 block mb-1">İsim</label><input id="ws-2" value="${w.settings.name}" class="w-full bg-white/5 border border-white/10 rounded p-2 text-sm">`;
+                else if(w.type==='countdown') html=`<label class="text-xs opacity-50 block mb-1">Etiket</label><input id="ws-1" value="${w.settings.label}" class="w-full bg-white/5 border border-white/10 rounded p-2 text-sm mb-2"><label class="text-xs opacity-50 block mb-1">Tarih</label><input type="date" id="ws-2" value="${w.settings.date}" class="w-full bg-white/5 border border-white/10 rounded p-2 text-sm">`;
+                else html='<p class="text-sm opacity-50 text-center">Ayar yok</p>';
+                f.innerHTML = html;
+                el('widgetModal').classList.add('modal-active');
+            }
 
-                // LINKS & TODO
-                addLink: () => {
-                    const t = el('linkTitle').value;
-                    let u = el('linkUrl').value;
-                    if(u) {
-                        if(!u.startsWith('http')) u = 'https://'+u;
-                        data.links.push({t, u, i: 'fa-globe'});
-                        save(); renderLinks();
-                        el('linkTitle').value=''; el('linkUrl').value='';
-                    }
-                },
-                delLink: (i) => { if(confirm('Sil?')) { data.links.splice(i,1); save(); renderLinks(); } },
-                
-                addTodo: () => {
-                    const v = el('todoInput').value;
-                    if(v) { data.todos.push({t:v, d:false}); save(); renderTodos(); el('todoInput').value=''; }
-                },
-                toggleTodoItem: (i) => { data.todos[i].d = !data.todos[i].d; save(); renderTodos(); },
-                delTodo: (i) => { data.todos.splice(i,1); save(); renderTodos(); },
+            function saveWidgetSettings() {
+                const w = data.widgets.find(x=>x.id===currentWid);
+                if(w.type==='weather') w.settings.city=el('ws-1').value;
+                if(w.type==='crypto') { w.settings.symbol=el('ws-1').value.toUpperCase(); w.settings.name=el('ws-2').value; }
+                if(w.type==='countdown') { w.settings.label=el('ws-1').value; w.settings.date=el('ws-2').value; }
+                save(); refreshWidgets(); el('widgetModal').classList.remove('modal-active');
+            }
 
-                toggleSettings: () => el('settingsModal').classList.toggle('modal-active'),
-                
-                toggleTodo: () => {
-                    const p = el('todoPanel');
-                    const o = el('todoOverlay');
-                    if(p.classList.contains('translate-x-full')) {
-                        p.classList.remove('translate-x-full');
-                        o.classList.remove('hidden');
-                    } else {
-                        p.classList.add('translate-x-full');
-                        o.classList.add('hidden');
-                    }
-                },
-                
-                cycleEngine: () => { data.engineIdx = (data.engineIdx+1)%engines.length; save(); renderAll(); },
-                search: () => window.location.href = engines[data.engineIdx].u + encodeURIComponent(el('searchInput').value),
-                reset: () => { if(confirm('Sıfırla?')) { storage.clear('hp_v11'); location.reload(); } }
-            };
+            // --- BACKUP & RESTORE ---
+            function exportData() {
+                const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = 'homepage_backup.json';
+                a.click(); URL.revokeObjectURL(url);
+            }
+
+            function importData(input) {
+                const file = input.files[0];
+                if(!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const imported = JSON.parse(e.target.result);
+                        if(imported && imported.widgets) {
+                            data = imported; save(); location.reload();
+                        } else alert('Geçersiz dosya');
+                    } catch { alert('Okuma hatası'); }
+                };
+                reader.readAsText(file);
+            }
+
+            // --- STANDARD UI ---
+            function renderAll() {
+                el('nameText').innerText = data.name; el('nameInput').value = data.name;
+                el('customBgInput').value = data.customBg || '';
+                renderWidgets(); renderLinks(); renderTodos();
+                el('engineName').innerText = ENGINES[data.engineIdx].n;
+            }
 
             function renderLinks() {
                 el('linksGrid').innerHTML = data.links.map((l,i) => `
@@ -540,16 +504,12 @@
                         <button onclick="app.delLink(${i})" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-lg"><i class="fa-solid fa-xmark"></i></button>
                         <i class="fa-solid ${l.i||'fa-globe'} text-2xl mb-2 opacity-80 group-hover:scale-110 transition"></i>
                         <span class="text-[10px] font-bold uppercase tracking-wider opacity-60 group-hover:opacity-100">${l.t}</span>
-                    </div>
-                `).join('');
+                    </div>`).join('');
             }
 
             function renderTodos() {
                 const list = el('todoList');
-                const badge = el('todoBadge');
-                const active = data.todos.filter(t=>!t.d).length;
-                badge.classList.toggle('hidden', active===0);
-                
+                el('todoBadge').classList.toggle('hidden', data.todos.filter(t=>!t.d).length===0);
                 list.innerHTML = data.todos.length ? data.todos.map((t,i) => `
                     <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition group">
                         <div onclick="app.toggleTodoItem(${i})" class="w-5 h-5 rounded border border-white/30 flex items-center justify-center cursor-pointer ${t.d?'bg-blue-500 border-blue-500':''}">
@@ -557,22 +517,53 @@
                         </div>
                         <span class="flex-1 text-sm ${t.d?'line-through opacity-50':''}">${t.t}</span>
                         <button onclick="app.delTodo(${i})" class="text-white/30 hover:text-red-400 opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                `).join('') : '<div class="text-center text-white/20 text-xs mt-10">Görev yok</div>';
+                    </div>`).join('') : '<div class="text-center text-white/20 text-xs mt-10">Görev yok</div>';
             }
-            
+
             function renderThemes() {
-                const bgColors = {
-                    midnight: '#0f172a', ocean: '#1e3a8a', forest: '#064e3b', cyber: '#111827', sunset: '#881337'
-                };
-                el('themeGrid').innerHTML = Object.keys(themes).map(k => 
-                    `<div class="w-full aspect-square rounded-xl cursor-pointer border-2 transition hover:scale-105 ${data.theme===k?'border-white shadow-xl scale-105':'border-transparent opacity-70 hover:opacity-100'}" style="background:${bgColors[k]}" onclick="app.setTheme('${k}')"></div>`
+                const colors = { midnight:'#0f172a', ocean:'#1e3a8a', forest:'#064e3b', sunset:'#881337', cyber:'#111827' };
+                el('themeGrid').innerHTML = Object.keys(THEMES).map(k => 
+                    `<div class="w-full aspect-square rounded-xl cursor-pointer border-2 transition ${data.theme===k?'border-white':'border-transparent opacity-70'}" style="background:${colors[k]}" onclick="app.setTheme('${k}')"></div>`
                 ).join('');
             }
 
-            return { init, ...app };
-        })();
+            // Expose
+            return {
+                init, exportData, importData,
+                updateName: (v) => { data.name=v; el('nameText').innerText=v; save(); },
+                setTheme: (t) => { data.theme=t; data.customBg=''; applyLook(); save(); },
+                setCustomBg: (u) => { data.customBg=u; applyLook(); save(); },
+                
+                toggleEdit: () => {
+                    isEditMode = !isEditMode;
+                    document.body.classList.toggle('edit-mode', isEditMode);
+                    el('editBtn').classList.toggle('bg-white/20', isEditMode);
+                    el('addWidgetBar').classList.toggle('hidden', !isEditMode);
+                    renderWidgets();
+                },
+                
+                addWidget: addWidget, wDel: (id) => { if(confirm('Sil?')){ data.widgets=data.widgets.filter(x=>x.id!==id); save(); renderWidgets(); } },
+                wResize: (id) => { const w=data.widgets.find(x=>x.id===id); w.span=w.span===1?2:1; save(); renderWidgets(); },
+                wMove: wMove, wEdit: wEdit, saveWidgetSettings: saveWidgetSettings, closeWidgetSettings: () => el('widgetModal').classList.remove('modal-active'),
+                
+                refreshW: (id) => { const w=data.widgets.find(x=>x.id===id); if(w.type==='weather') fetchWeather(w); if(w.type==='crypto') fetchCrypto(w); },
+                pomoToggle: pomoToggle, saveNote: (id,v) => { data.widgets.find(x=>x.id===id).settings.content=v; save(); },
+                calcInput: calcInput,
 
+                addLink: () => { const t=el('linkTitle').value, u=el('linkUrl').value; if(u){ data.links.push({t, u:u.startsWith('http')?u:'https://'+u, i:'fa-globe'}); save(); renderLinks(); el('linkTitle').value=''; el('linkUrl').value=''; } },
+                delLink: (i) => { if(confirm('Sil?')){ data.links.splice(i,1); save(); renderLinks(); } },
+                
+                addTodo: () => { const v=el('todoInput').value; if(v){ data.todos.push({t:v, d:false}); save(); renderTodos(); el('todoInput').value=''; } },
+                toggleTodoItem: (i) => { data.todos[i].d=!data.todos[i].d; save(); renderTodos(); },
+                delTodo: (i) => { data.todos.splice(i,1); save(); renderTodos(); },
+
+                toggleSettings: () => el('settingsModal').classList.toggle('modal-active'),
+                toggleTodo: () => { const p=el('todoPanel'), o=el('todoOverlay'); p.classList.toggle('translate-x-full'); o.classList.toggle('hidden'); },
+                cycleEngine: () => { data.engineIdx=(data.engineIdx+1)%ENGINES.length; save(); renderAll(); },
+                search: () => window.location.href=ENGINES[data.engineIdx].u + encodeURIComponent(el('searchInput').value),
+                reset: () => { if(confirm('Sıfırla?')){ storage.clear('hp_v12'); location.reload(); } }
+            };
+        })();
         document.addEventListener('DOMContentLoaded', app.init);
     </script>
 </body>
